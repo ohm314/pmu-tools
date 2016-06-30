@@ -1,0 +1,27 @@
+<html ng-app="ocperfApp">
+  <head>
+      <script
+              src="http://code.jquery.com/jquery-3.0.0.min.js"
+              integrity="sha256-JmvOoLtYsmqlsWxa7mDSLMwa6dZ9rrIdtrrVYRnDRH0="
+              crossorigin="anonymous"></script>
+
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-sanitize.js"></script>
+
+      <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.css" type="text/css" />
+      <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.js"></script>
+      <script src="/js/index.js"></script>
+
+  </head>
+
+  <body ng-controller="ocperfCtrl">
+    Workload: <input ng-model="workload"></input> <br/>
+    Events: <input ng-model="events"></input> <br/>
+    Interval: <input ng-model="interval"></input> <br/>
+
+    <button ng-click="run()">run</button>
+
+      <ng-bind-html ng-bind-html="plain_html"></ng-bind-html>
+  </body>
+
+</html>
