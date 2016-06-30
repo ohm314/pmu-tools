@@ -687,7 +687,7 @@ def find_emap():
         pass
     return None
 
-def process_events(event, print_only, period):
+def process_events(event, print_only, period, emap):
     overflow = None
     # replace inner commas so we can split events
     event = re.sub(r"([a-z][a-z0-9]+/)([^/]+)/",
@@ -743,20 +743,20 @@ def process_events(event, print_only, period):
 
     return str.join(',', nl), overflow
 
-def getarg(i, cmd):
-    if sys.argv[i][2:] == '':
-        cmd.append(sys.argv[i])
+def getarg(i, cmd, argv=sys.argv):
+    if argv[i][2:] == '':
+        cmd.append(argv[i])
         i += 1
         arg = ""
-        if len(sys.argv) > i:
-            arg = sys.argv[i]
+        if len(argv) > i:
+            arg = argv[i]
         prefix = ""
     else:
-        arg = sys.argv[i][2:]
-        prefix = sys.argv[i][:2]
+        arg = argv[i][2:]
+        prefix = argv[i][:2]
     return arg, i, prefix
 
-def process_args():
+def process_args(emap, argv=sys.argv):
     perf = os.getenv("PERF")
     if not perf:
         perf = "perf"
@@ -767,23 +767,23 @@ def process_args():
     never, no, yes = range(3)
     record = no
     i = 1
-    while i < len(sys.argv):
-        if sys.argv[i] == "--print":
+    while i < len(argv):
+        if argv[i] == "--print":
             print_only = True
-        elif sys.argv[i] == "--force-download":
+        elif argv[i] == "--force-download":
            pass
-        elif sys.argv[i] == "--no-period":
+        elif argv[i] == "--no-period":
             record = never
         # XXX does not handle options between perf and record
-        elif sys.argv[i] == "record" and record == no:
-            cmd.append(sys.argv[i])
+        elif argv[i] == "record" and record == no:
+            cmd.append(argv[i])
             record = yes
-        elif sys.argv[i][0:2] == '-e':
-            event, i, prefix = getarg(i, cmd)
+        elif argv[i][0:2] == '-e':
+            event, i, prefix = getarg(i, cmd, argv=argv)
             event, overflow = process_events(event, print_only,
-                                             True if record == yes else False)
+                                             True if record == yes else False, emap)
             cmd.append(prefix + event)
-        elif sys.argv[i][0:2] == '-c':
+        elif argv[i][0:2] == '-c':
             oarg, i, prefix = getarg(i, cmd)
             if oarg == "default":
                 if overflow is None:
@@ -794,7 +794,7 @@ Specify the -e events before -c default or event has no overflow field."""
             else:
                 cmd.append(prefix + oarg)
         else:        
-            cmd.append(sys.argv[i])
+            cmd.append(argv[i])
         i += 1
     print " ".join(map(pipes.quote, cmd))
     if print_only:
@@ -852,6 +852,52 @@ def perf_cmd(cmd):
     else:
         sys.exit(subprocess.call(cmd))
 
+def get_perf_output(cmd):
+    if len(cmd) >= 2 and cmd[1] == "list":
+        pager, proc = get_pager()
+        try:
+            l = subprocess.Popen(cmd, stdout=pager)
+            l.wait()
+            print >>pager
+            emap.dumpevents(pager, proc is not None)
+            if proc:
+                pager.close()
+                proc.wait()
+        except IOError:
+            pass
+    # elif len(argv) >= 2 and (argv[1] == "report" or argv[1] == "stat"):
+    elif len(cmd) >= 2 and (cmd[1] == "report" or cmd[1] == "stat"):
+        direct = version.has_name
+        if not direct:
+            for w in cmd:
+                if w == "--tui":
+                    direct = True
+                    break
+        if direct:
+            pipe = subprocess.Popen(cmd,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            (out, err) = pipe.communicate()
+            latego.cleanup()
+            return err
+            # sys.exit(ret)
+        try:
+            pipe = subprocess.Popen(cmd,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT).stdout
+            raw = lambda e: " " + emap.getraw(int(e.group(1), 16))
+            for i in pipe:
+                i = re.sub("[rR]aw 0x([0-9a-f]{4,})", raw, i)
+                i = re.sub("r([0-9a-f]{4,})", raw, i)
+                i = re.sub("(cpu/.*?/)", lambda e: emap.getperf(e.group(1)), i)
+                print i,
+        except IOError:
+            pass
+        pipe.close()
+        latego.cleanup()
+    else:
+        sys.exit(subprocess.call(cmd))
+
 if __name__ == '__main__':
     for j in sys.argv:
         if j == "--force-download":
@@ -860,7 +906,7 @@ if __name__ == '__main__':
     if not emap:
         sys.exit("Do not recognize CPU or cannot find CPU map file")
     msr = MSR()
-    cmd = process_args()
+    cmd = process_args(emap)
     try:
         perf_cmd(cmd)
     except KeyboardInterrupt:

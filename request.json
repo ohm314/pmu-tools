@@ -1,0 +1,5 @@
+{
+	"workload" : "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg",
+	"events" : ["arith.div", "arith.mul"],
+	"interval" : 200
+}
