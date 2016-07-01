@@ -39,7 +39,7 @@
             <div style="height: 600px; overflow: scroll">
                 <div ng-repeat="entry in emap | filter:search_term | orderBy:'sym'"
                     data-toggle="tooltip" data-placement="right" title="{{entry.desc}}">
-                    <input type="checkbox" checklist-model="e" checklist-value="entry.sym"> {{ entry.sym }}
+                    <input type="checkbox" checklist-model="events" checklist-value="entry.sym"> {{ entry.sym }}
                 </div>
             </div>
 

@@ -1,17 +1,24 @@
 from bokeh.plotting import figure
 from bokeh.embed import components
+from bokeh.palettes import inferno
 
 from os import path
 
 def plot_parsed_ocperf_output(parsed_output):
-    k = parsed_output.keys()[0]
-    samples = parsed_output[k]
-
-    x = [sample[0] for sample in samples]
-    y = [sample[1] for sample in samples]
+    color_idx = 0
+    palette = inferno(len(parsed_output.keys()))
 
     p = figure()
-    p.line(x, y)
+
+    for k in parsed_output.keys():
+        samples = parsed_output[k]
+
+        x = [sample[0] for sample in samples]
+        y = [sample[1] for sample in samples]
+
+        p.line(x, y, color=palette[color_idx], legend=k)
+
+        color_idx += 1
 
     return p
 

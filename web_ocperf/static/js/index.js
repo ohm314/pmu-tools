@@ -16,7 +16,6 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
         $scope.events = ["arith.mul"];
         $scope.interval = 100;
         $scope.search_term = "";
-        $scope.e = [];
 
         function getDiv() {
             return $http.get("/plot/plot.html").then(function(response) {
