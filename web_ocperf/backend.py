@@ -59,7 +59,7 @@ def rest_run_endpoint():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_from_directory("templates", "index.html")
 
 @app.route("/js/<path:path>")
 def static_js(path):

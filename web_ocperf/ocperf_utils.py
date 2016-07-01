@@ -52,12 +52,12 @@ def serialize_results(parsed_output):
     return json.dumps(parsed_output)
 
 def serialize_emap(emap):
-    d = {}
+    d = []
 
     for k in emap.events.keys():
-        d[k] = emap.desc[k]
+        d.append( {"sym":k, "desc":emap.desc[k]} )
 
     for k in emap.uncore_events.keys():
-        d[k] = emap.uncored_events[k].desc
+        d.append( {"sym":k, "desc":emap.uncored_events[k].desc} )
 
     return json.dumps(d, indent=2)
