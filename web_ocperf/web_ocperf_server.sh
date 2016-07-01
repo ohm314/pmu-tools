@@ -1,2 +1,2 @@
 #!/bin/bash
-PYTHONPATH=".." python2 backend.py --serve
+PYTHONPATH=".." python2 backend.py

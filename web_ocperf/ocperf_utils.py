@@ -3,7 +3,7 @@ from os import path
 import json
 import sys
 
-def build_perf_cmd(workload, events_list=None, interval=None):
+def build_ocperf_cmd(workload, events_list=None, interval=None):
     cmd = ["perf", "stat", "-x", ","]
 
     if events_list:
