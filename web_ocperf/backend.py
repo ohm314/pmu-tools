@@ -1,16 +1,28 @@
 #!/usr/bin/python2
-import ocperf as ocp
 from os import path
-import json
-from flask import Flask, Response, request, send_from_directory, render_template
 import sys
-from bokeh.plotting import figure
-from bokeh.embed import components
-from ocperf_utils import *
+import json
 
-RULE_LEN = 80 # just for debug output
+import ocperf as ocp
 
-def scratch(workload, events, interval):
+from plot_utils import plot_parsed_ocperf_output, store_plot_at
+from ocperf_utils import (
+    build_ocperf_cmd,
+    parse_output,
+    serialize_results,
+    serialize_emap,
+)
+
+
+from flask import (
+    Flask,
+    Response,
+    request,
+    send_from_directory,
+    render_template,
+)
+
+def run_ocperf(workload, events, interval):
     """
     workload - command to profile represented as list of strings like .split(' ')
     events - list of symbolic names of events to count
@@ -39,26 +51,9 @@ def rest_run_endpoint():
     events = d['events']
     interval = d['interval']
 
-    parsed_output = scratch(workload, events, interval)
-
-    k = parsed_output.keys()[0]
-    samples = parsed_output[k]
-
-    x = [sample[0] for sample in samples]
-    y = [sample[1] for sample in samples]
-
-    p = figure()
-    p.line(x, y)
-
-    script, div = components(p, wrap_script=False)
-
-    with file("tmp/plot.html", "w") as f:
-        print("writing plot")
-        f.write(div)
-
-    with file("tmp/script.js", "w") as f:
-        print("writing script")
-        f.write(script)
+    parsed_output = run_ocperf(workload, events, interval)
+    p = plot_parsed_ocperf_output(parsed_output)
+    store_plot_at(p, "tmp")
 
     return Response(json.dumps(parsed_output, indent=2), mimetype="application/json")
 
