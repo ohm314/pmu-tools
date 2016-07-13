@@ -3,6 +3,7 @@ from os import path
 import json
 import sys
 
+
 def build_ocperf_cmd(workload, events_list=None, interval=None):
     cmd = ["perf", "stat", "-x", ","]
 
@@ -14,6 +15,39 @@ def build_ocperf_cmd(workload, events_list=None, interval=None):
 
     cmd += workload
     return cmd
+
+def async_stdout_handler(cmd, callback):
+    import subprocess
+    import sys
+    from os import O_NONBLOCK, read
+    from fcntl import fcntl, F_GETFL, F_SETFL
+
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    flags = fcntl(p.stdout, F_GETFL)
+
+    buff = []
+    reading = False
+    while True:
+        output = p.stdout.readline()
+
+        if output != '' and not reading:
+            fcntl(p.stdout, F_SETFL, flags | O_NONBLOCK)
+            reading = True
+            buff.append(output)
+
+        if output != '' and reading:
+            buff.append(output)
+
+        if output == '' and p.poll() is None and reading:
+            fcntl(p.stdout, F_SETFL, flags & ~O_NONBLOCK)
+            reading = False
+
+        if output == '' and len(buff) != 0:
+            callback(buff)
+            buff = []
+
+        if output == '' and p.poll() is not None:
+            break;
 
 # TODO use pandas
 def parse_output(raw_output):

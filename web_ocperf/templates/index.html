@@ -49,12 +49,13 @@
          <div class="col-md-8"> 
           <div class="row">
               <div class="col-md-2">
-                  <label for="interval">Interval [ms]</label>
+                  <label for="streaming">Streaming</label>
+                  <input type="checkbox" ng-model="streaming" id="streaming">
               </div>
 
 
               <div class="col-md-2">
-                  <!-- <label for="interval">Interval [ms]</label> -->
+                  <label for="interval">Interval [ms]</label>
                   <input ng-model="interval" type="text" id="interval" class="form-control">
               </div>
 
@@ -64,8 +65,9 @@
 
             </div>
 
-            <div class="row">
-              <ng-bind-html ng-bind-html="plain_html"></ng-bind-html>
+            <div class="row" style="background-color: red" width="100%">
+              <div ng-bind-html="plain_html"></div>
+              <div id="some_script"></div>
             </div>
         </div>
 

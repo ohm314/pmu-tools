@@ -8,7 +8,7 @@ def plot_parsed_ocperf_output(parsed_output):
     color_idx = 0
     palette = inferno(len(parsed_output.keys()))
 
-    p = figure()
+    p = figure(plot_width=800)
 
     for k in parsed_output.keys():
         samples = parsed_output[k]
@@ -28,6 +28,7 @@ def store_plot_at(plt, dst):
     dst - directory (where)
     """
     script, div = components(plt, wrap_script=False)
+    print("storing plot")
 
     with file(path.join(dst, "plot.html"), "w") as f:
         f.write(div)

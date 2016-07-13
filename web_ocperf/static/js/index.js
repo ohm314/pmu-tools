@@ -1,5 +1,5 @@
 angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
-    .service('ocperf_rest', function($http) {
+    .service('ocperf_rest', function($http, $sce) {
         function get_emap() {
             return $http.get('/api/v1/emap').then(function(response) {
                 return response.data;
@@ -16,6 +16,7 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
         $scope.events = ["arith.mul"];
         $scope.interval = 100;
         $scope.search_term = "";
+        $scope.streaming = true;
 
         function getDiv() {
             return $http.get("/plot/plot.html").then(function(response) {
@@ -37,12 +38,34 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
             getDiv().then(getScript).then(loadPlot);
         }
 
+        function getAutoloadScript() {
+            return $http.get("/plot/autoload_script.js").then(function(response) {
+                // $scope.plain_html = $sce.trustAsHtml(response.data);
+                var s_tag = response.data;
+                $("#some_script").append($(s_tag));
+            });
+        }
+
+        function startAutoloadScript() {
+            console.log("should start autoload script");
+            console.log($scope.plain_html);
+        }
+
+        function fetchPlot2() {
+            getAutoloadScript().then(startAutoloadScript);
+        }
+
         $scope.run = function() {
-            $http.post("/api/v1/run", data={
+            var data = {
                 workload: $scope.workload,
                 events: $scope.events,
-                interval: $scope.interval
-            }).then(fetchPlot);
+                interval: $scope.interval,
+                streaming: $scope.streaming
+            };
+
+            console.log(data);
+
+            $http.post("/api/v1/run", data=data).then(fetchPlot2);
         }
 
         ocperf_rest.get_emap().then(function(emap) {
