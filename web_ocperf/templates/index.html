@@ -19,10 +19,12 @@
       <!-- <\!-- Latest compiled and minified JavaScript -\-> -->
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 
+      <link rel="stylesheet" href="/css/style.css">
+
   </head>
 
   <body ng-controller="ocperfCtrl">
-    <div class="container wrapper">
+    <div class="container wrapper full-height">
 
       <!-- upper workload input -->
       <div class="row">
@@ -31,12 +33,13 @@
       </div>
 
       <!-- row for both left and right side, the main container actually -->
-      <div class="row">
+      <div class="row full-height">
         <!-- left side (list of events) -->
-          <div class="col-md-4">
+
+          <div class="col-md-4 full-height">
             <input class="form-control" ng-model="search_term">
 
-            <div style="height: 600px; overflow: scroll">
+            <div style="overflow: scroll; height: 85%;">
                 <div ng-repeat="entry in emap | filter:search_term | orderBy:'sym'"
                     data-toggle="tooltip" data-placement="right" title="{{entry.desc}}">
                     <input type="checkbox" checklist-model="events" checklist-value="entry.sym"> {{ entry.sym }}
