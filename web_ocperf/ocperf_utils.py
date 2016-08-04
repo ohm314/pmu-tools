@@ -85,7 +85,9 @@ def print_parsed(parsed_output):
 def serialize_results(parsed_output):
     return json.dumps(parsed_output)
 
-def serialize_emap(emap):
+def get_ocperf_emap():
+    emap = ocp.find_emap()
+
     d = []
 
     for k in emap.events.keys():
@@ -94,4 +96,33 @@ def serialize_emap(emap):
     for k in emap.uncore_events.keys():
         d.append( {"sym":k, "desc":emap.uncored_events[k].desc} )
 
-    return json.dumps(d, indent=2)
+    return d
+
+def get_perf_emap():
+    import subprocess
+    args = ["perf", "list", "--raw-dump"]
+    l = []
+    NO_DESC = "(no decsription)"
+
+    p = subprocess.Popen(args, stdout=subprocess.PIPE)
+    p.wait()
+    events_list_str = p.stdout.read()
+    ret = p.poll()
+
+    if ret != 0:
+        raise Exception("Something went wrong with perf list!")
+
+    for event in events_list_str.split(' '):
+        l.append({"sym": event, "desc": NO_DESC})
+
+
+    return l
+
+def get_combined_emap():
+    ocperf_emap = get_ocperf_emap()
+    perf_emap = get_perf_emap()
+
+    return ocperf_emap + perf_emap
+
+def serialize_emap(emap):
+    return json.dumps(emap)

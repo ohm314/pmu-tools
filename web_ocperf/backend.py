@@ -10,13 +10,7 @@ import ocperf as ocp
 
 # utils for web_ocperf
 from plot_utils import plot_parsed_ocperf_output, store_plot_at
-from ocperf_utils import (
-    build_ocperf_cmd,
-    parse_output,
-    serialize_results,
-    serialize_emap,
-)
-
+from ocperf_utils import *
 
 # flask related imports
 from flask import (
@@ -42,6 +36,7 @@ def run_ocperf(workload, events, interval):
     """
     ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
     emap = ocp.find_emap()
+    emap = get_combined_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     raw_perf_output = ocp.get_perf_output(perf_cmd)
     parsed_perf_output = parse_output(raw_perf_output)
@@ -51,8 +46,10 @@ app = Flask("ocperf server", static_url_path='')
 
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():
-    emap = ocp.find_emap()
-    json_emap = serialize_emap(emap)
+    combined_emap = get_combined_emap()
+    print(combined_emap)
+    json_emap = serialize_emap(combined_emap)
+
     return Response(json_emap, mimetype="application/json")
 
 @gen.coroutine
