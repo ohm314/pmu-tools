@@ -110,14 +110,6 @@ def index():
 def static_js(path):
     return send_from_directory('static/js', path)
 
-@app.route("/plot/plot.html")
-def get_plot():
-    return send_from_directory('tmp', 'plot.html')
-
-@app.route("/plot/script.js")
-def get_script():
-    return send_from_directory('tmp', 'script.js')
-
 @app.route("/plot/autoload_script.js")
 def get_autoload_script():
     return send_from_directory('tmp', 'autoload_script.js')
