@@ -1,0 +1,28 @@
+* functions
+| status    | function title | description                                                      | resolution                                                |
+|-----------+----------------+------------------------------------------------------------------+-----------------------------------------------------------|
+| ok        | run_ocperf     | shorthand function for running ocperf and get results as a whole | move to ocperf utils                                      |
+| ok        | update         | needed for straeming                                             | create new module                                         |
+| ok        | session_task   | thread runnable for keeping session alive                        | move to that new streaming module                         |
+| partially | blocking_task  | needed for streaming, actually running the workload in streaming | move to that new streaming module, neds heavy refactoring |
+
+* routes
+| status | function title      | description             | resolution              |
+|--------+---------------------+-------------------------+-------------------------|
+|        | get_plot            | unknown                 | delete                  |
+|        | get_script          | unknown                 | delete                  |
+|        | get_autoload_script | unknown                 | delete                  |
+|        | rest_run_endpoint   | does dirty job          | needs heavy refactoring |
+|        | rest_emap_endpoint  | returns JSON with emaps | add doctstring          |
+|        | index               | return root path        | null                    |
+|        | static_js           | return js files         | null                    |
+
+* TODO Refactoring [0/5]
+ - [ ] import cleanup
+ - [ ] HTML/JS cleanup
+ - [ ] rest_run_ednpoint teardown
+ - [ ] closing bokeh session after workload process ends
+ - [ ] trace memory leaks
+ - [ ] create router module
+ - [ ] deal with more agressive caching
+ - [ ] write requirements.txt
