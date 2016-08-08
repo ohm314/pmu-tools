@@ -126,3 +126,16 @@ def get_combined_emap():
 
 def serialize_emap(emap):
     return json.dumps(emap)
+
+def run_ocperf(workload, events, interval):
+    """
+    workload - command to profile represented as list of strings like .split(' ')
+    events - list of symbolic names of events to count
+    interval - sampling interval
+    """
+    ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
+    emap = ocp.find_emap()
+    perf_cmd = ocp.process_args(emap, ocperf_cmd)
+    raw_perf_output = ocp.get_perf_output(perf_cmd)
+    parsed_perf_output = parse_output(raw_perf_output)
+    return parsed_perf_output

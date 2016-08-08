@@ -28,19 +28,6 @@ from bokeh.plotting import curdoc, figure, show
 from bokeh.embed import autoload_server, components
 from tornado import gen
 
-def run_ocperf(workload, events, interval):
-    """
-    workload - command to profile represented as list of strings like .split(' ')
-    events - list of symbolic names of events to count
-    interval - sampling interval
-    """
-    ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
-    emap = ocp.find_emap()
-    perf_cmd = ocp.process_args(emap, ocperf_cmd)
-    raw_perf_output = ocp.get_perf_output(perf_cmd)
-    parsed_perf_output = parse_output(raw_perf_output)
-    return parsed_perf_output
-
 app = Flask("ocperf server", static_url_path='')
 
 @app.route("/api/v1/emap", methods=['GET'])
@@ -118,7 +105,7 @@ def blocking_task(doc, workload, events, interval):
         if out == '':
             break
         else:
-            # print(out)
+            print(out)
             doc.add_next_tick_callback(partial(update, line=out))
 
     print("long running thread is dead")
@@ -150,7 +137,7 @@ def rest_run_endpoint():
 
         print("[REGISTER] Source ID: " + str(id(source)))
 
-        p = figure(title="streaming plot", toolbar_sticky=True, toolbar_location="below", tools="pan,wheel_zoom,box_zoom,reset")
+        p = figure(title="streaming plot", toolbar_sticky=False)
         l = p.line(x='x', y='y', source=source)
 
         kwargs = {
