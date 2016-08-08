@@ -4,7 +4,6 @@ from os import path
 import sys
 import json
 from threading import Thread
-from functools import partial
 
 import ocperf as ocp
 
@@ -30,53 +29,10 @@ from bokeh.embed import autoload_server, components
 
 app = Flask("ocperf server", static_url_path='')
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
-
-@app.route("/api/v1/emap", methods=['GET'])
-def rest_emap_endpoint():
-    combined_emap = get_combined_emap()
-    json_emap = serialize_emap(combined_emap)
-
-    return Response(json_emap, mimetype="application/json")
-
-def blocking_task(doc, workload, events, interval):
-    # dirty fix for py2 incompatibility between @wraps and partial from functools
-    # this should be just: from functools import partial
-    # more info: http://bit.ly/29xoM9p
-    def partial(func, *args, **keywords):
-        def newfunc(*fargs, **fkeywords):
-            newkeywords = keywords.copy()
-            newkeywords.update(fkeywords)
-            return func(*(args + fargs), **newkeywords)
-        newfunc.func = func
-        newfunc.args = args
-        newfunc.keywords = keywords
-        return newfunc
-
-    print("inside streaming thread")
-
-    ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
-    emap = ocp.find_emap()
-    perf_cmd = ocp.process_args(emap, ocperf_cmd)
-    pipe = ocp.get_perf_output_pipe(perf_cmd)
-
-    while True:
-        # print("in tha loop")
-        out = pipe.stderr.readline()
-
-        if out == '':
-            break
-        else:
-            print(out)
-            doc.add_next_tick_callback(partial(update, line=out, source=source))
-
-    print("long running thread is dead")
-
-
 doc = None
 
 @app.route("/api/v1/run", methods=['POST'])
 def rest_run_endpoint():
-
     d = request.get_json()
 
     workload = d['workload'].split(' ')
@@ -91,7 +47,6 @@ def rest_run_endpoint():
         return Response(json.dumps(parsed_output, indent=2), mimetype="application/json")
     elif streaming:
         print("doing streaming branch")
-        # source = ColumnDataSource(data=dict(x=[0], y=[0]))
 
         doc = curdoc()
         session = push_session(doc)
@@ -106,6 +61,7 @@ def rest_run_endpoint():
             "workload": workload,
             "events": events,
             "interval": interval,
+            "source": source,
         }
 
         doc.add_root(p)
@@ -118,8 +74,6 @@ def rest_run_endpoint():
 
 
         script = autoload_server(model=p, session_id=session.id)
-
-        # session.show()
 
         # store_plot_at(doc, "tmp")
         with open("./tmp/autoload_script.js", "w") as f:
@@ -140,6 +94,13 @@ def rest_run_endpoint():
             f.write(template.format(script))
 
         return Response(script)
+
+@app.route("/api/v1/emap", methods=['GET'])
+def rest_emap_endpoint():
+    combined_emap = get_combined_emap()
+    json_emap = serialize_emap(combined_emap)
+
+    return Response(json_emap, mimetype="application/json")
 
 @app.route("/")
 def index():
@@ -163,4 +124,3 @@ def get_autoload_script():
 
 if __name__ == "__main__":
     app.run(debug=True)
-

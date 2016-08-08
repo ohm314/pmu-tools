@@ -1,4 +1,5 @@
 from tornado import gen
+from ocperf_utils import *
 
 @gen.coroutine
 def update(line, source):
@@ -34,3 +35,36 @@ def session_task(session):
     print("Spawning background session task")
     session.loop_until_closed()
     print("closed!")
+
+def blocking_task(doc, workload, events, interval, source):
+    # dirty fix for py2 incompatibility between @wraps and partial from functools
+    # this should be just: from functools import partial
+    # more info: http://bit.ly/29xoM9p
+    def partial(func, *args, **keywords):
+        def newfunc(*fargs, **fkeywords):
+            newkeywords = keywords.copy()
+            newkeywords.update(fkeywords)
+            return func(*(args + fargs), **newkeywords)
+        newfunc.func = func
+        newfunc.args = args
+        newfunc.keywords = keywords
+        return newfunc
+
+    print("inside streaming thread")
+
+    ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
+    emap = ocp.find_emap()
+    perf_cmd = ocp.process_args(emap, ocperf_cmd)
+    pipe = ocp.get_perf_output_pipe(perf_cmd)
+
+    while True:
+        # print("in tha loop")
+        out = pipe.stderr.readline()
+
+        if out == '':
+            break
+        else:
+            print(out)
+            doc.add_next_tick_callback(partial(update, line=out, source=source))
+
+    print("long running thread is dead")
