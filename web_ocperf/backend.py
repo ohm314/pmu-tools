@@ -29,6 +29,7 @@ from bokeh.plotting import curdoc, figure, show
 from bokeh.embed import autoload_server, components
 
 app = Flask("ocperf server", static_url_path='')
+source = ColumnDataSource(data=dict(x=[0], y=[0]))
 
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():
@@ -36,15 +37,6 @@ def rest_emap_endpoint():
     json_emap = serialize_emap(combined_emap)
 
     return Response(json_emap, mimetype="application/json")
-
-# TODO: this can't stay like this
-source = ColumnDataSource(data=dict(x=[0], y=[0]))
-print("[DEFINE] Source ID: " + str(id(source)))
-
-def session_task(session):
-    print("Spawning background session task")
-    session.loop_until_closed()
-    print("closed!")
 
 def blocking_task(doc, workload, events, interval):
     # dirty fix for py2 incompatibility between @wraps and partial from functools

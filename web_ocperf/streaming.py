@@ -29,3 +29,8 @@ def update(line, source):
     print("doing update")
     print(timestamp, value, event)
     source.stream(dict(x=[timestamp], y=[value]))
+
+def session_task(session):
+    print("Spawning background session task")
+    session.loop_until_closed()
+    print("closed!")
