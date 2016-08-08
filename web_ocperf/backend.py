@@ -11,6 +11,7 @@ import ocperf as ocp
 # utils for web_ocperf
 from plot_utils import plot_parsed_ocperf_output, store_plot_at
 from ocperf_utils import *
+from streaming import *
 
 # flask related imports
 from flask import (
@@ -26,7 +27,6 @@ from bokeh.client import push_session, pull_session
 from bokeh.models import ColumnDataSource
 from bokeh.plotting import curdoc, figure, show
 from bokeh.embed import autoload_server, components
-from tornado import gen
 
 app = Flask("ocperf server", static_url_path='')
 
@@ -36,37 +36,6 @@ def rest_emap_endpoint():
     json_emap = serialize_emap(combined_emap)
 
     return Response(json_emap, mimetype="application/json")
-
-@gen.coroutine
-def update(line):
-    global source
-    s = line.split(',')
-
-    timestamp = None
-    value = None
-    event = None
-
-    print("[UPDATE] Source ID: " + str(id(source)))
-
-    try:
-        timestamp = float(s[0])
-    except:
-        print "Problem with timestamp: " + s[0]
-
-    try:
-        event = s[3]
-    except:
-        print "Problem with event name: " + s[3]
-
-    try:
-        value = int(s[1])
-    except:
-        value = 0
-        print "problem with value parsing: " + s[1]
-
-    print("doing update")
-    print(timestamp, value, event)
-    source.stream(dict(x=[timestamp], y=[value]))
 
 # TODO: this can't stay like this
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
@@ -106,7 +75,7 @@ def blocking_task(doc, workload, events, interval):
             break
         else:
             print(out)
-            doc.add_next_tick_callback(partial(update, line=out))
+            doc.add_next_tick_callback(partial(update, line=out, source=source))
 
     print("long running thread is dead")
 
