@@ -1,3 +1,4 @@
+/* jshint globals: false */
 angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
     .service('ocperf_rest', function($http, $sce) {
         function get_emap() {
@@ -10,9 +11,9 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
             get_emap: get_emap
         };
     })
-    .controller('ocperfCtrl', function($scope, $http, $sce, ocperf_rest) {
+    .controller('ocperfCtrl', function($scope, $http, $sce, ocperf_rest, $window) {
         var script = null;
-        $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg"
+        $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
         $scope.events = ["arith.mul"];
         $scope.interval = 100;
         $scope.search_term = "";
@@ -22,15 +23,16 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
             return $http.get("/plot/plot.html").then(function(response) {
                 $scope.plain_html = $sce.trustAsHtml(response.data);
             });
-        };
+        }
 
         function getScript() {
             return $http.get("/plot/script.js").then(function(response) {
                 script = response.data;
             });
-        };
+        }
 
         function loadPlot() {
+            /* jshint ignore: "eval" */
             eval(script);
         }
 
@@ -53,6 +55,8 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
 
         function fetchPlot2() {
             getAutoloadScript().then(startAutoloadScript);
+            // console.log("redirecting");
+            // $window.open("http://127.0.0.1:8000/index.html");
         }
 
         $scope.run = function() {
@@ -66,7 +70,7 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
             console.log(data);
 
             $http.post("/api/v1/run", data=data).then(fetchPlot2);
-        }
+        };
 
         ocperf_rest.get_emap().then(function(emap) {
             $scope.emap = emap;

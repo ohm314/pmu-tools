@@ -22,7 +22,7 @@ from flask import (
 )
 
 # bokeh related imports
-from bokeh.client import push_session
+from bokeh.client import push_session, pull_session
 from bokeh.models import ColumnDataSource
 from bokeh.plotting import curdoc, figure, show
 from bokeh.embed import autoload_server, components
@@ -36,7 +36,6 @@ def run_ocperf(workload, events, interval):
     """
     ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
     emap = ocp.find_emap()
-    emap = get_combined_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     raw_perf_output = ocp.get_perf_output(perf_cmd)
     parsed_perf_output = parse_output(raw_perf_output)
@@ -47,18 +46,20 @@ app = Flask("ocperf server", static_url_path='')
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():
     combined_emap = get_combined_emap()
-    print(combined_emap)
     json_emap = serialize_emap(combined_emap)
 
     return Response(json_emap, mimetype="application/json")
 
 @gen.coroutine
 def update(line):
+    global source
     s = line.split(',')
 
     timestamp = None
     value = None
     event = None
+
+    print("[UPDATE] Source ID: " + str(id(source)))
 
     try:
         timestamp = float(s[0])
@@ -82,6 +83,12 @@ def update(line):
 
 # TODO: this can't stay like this
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
+print("[DEFINE] Source ID: " + str(id(source)))
+
+def session_task(session):
+    print("Spawning background session task")
+    session.loop_until_closed()
+    print("closed!")
 
 def blocking_task(doc, workload, events, interval):
     # dirty fix for py2 incompatibility between @wraps and partial from functools
@@ -103,8 +110,6 @@ def blocking_task(doc, workload, events, interval):
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     pipe = ocp.get_perf_output_pipe(perf_cmd)
-
-    print(id(doc))
 
     while True:
         # print("in tha loop")
@@ -138,13 +143,14 @@ def rest_run_endpoint():
         return Response(json.dumps(parsed_output, indent=2), mimetype="application/json")
     elif streaming:
         print("doing streaming branch")
-        source = ColumnDataSource(data=dict(x=[0], y=[0]))
+        # source = ColumnDataSource(data=dict(x=[0], y=[0]))
 
         doc = curdoc()
-        print(id(doc))
         session = push_session(doc)
 
-        p = figure(toolbar_location=None)
+        print("[REGISTER] Source ID: " + str(id(source)))
+
+        p = figure(title="streaming plot", toolbar_sticky=True, toolbar_location="below", tools="pan,wheel_zoom,box_zoom,reset")
         l = p.line(x='x', y='y', source=source)
 
         kwargs = {
@@ -159,13 +165,33 @@ def rest_run_endpoint():
         thread = Thread(target=blocking_task, kwargs=kwargs)
         thread.start()
 
-        script = autoload_server(p, session_id=session.id)
+        session_thread = Thread(target=session_task, kwargs={"session":session})
+        session_thread.start()
+
+
+        script = autoload_server(model=p, session_id=session.id)
+
+        # session.show()
 
         # store_plot_at(doc, "tmp")
         with open("./tmp/autoload_script.js", "w") as f:
             f.write(script)
 
-        return Response("ok")
+        template = """ <html>
+          <head>
+          </head>
+          <body>
+            <div class="bk-root">
+                {}
+            </div>
+          </body>
+        </html>
+        """
+
+        with open("/tmp/index.html", "w") as f:
+            f.write(template.format(script))
+
+        return Response(script)
 
 @app.route("/")
 def index():
@@ -189,3 +215,4 @@ def get_autoload_script():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
