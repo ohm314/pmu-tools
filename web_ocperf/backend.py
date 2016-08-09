@@ -27,54 +27,40 @@ source = ColumnDataSource(data=dict(x=[0], y=[0]))
 
 @app.route("/api/v1/run", methods=['POST'])
 def rest_run_endpoint():
-    d = request.get_json()
+    doc = curdoc()
+    session = push_session(doc)
+    p = None
 
+    d = request.get_json()
     workload = d['workload'].split(' ')
     events = d['events']
     interval = d['interval']
     streaming = d['streaming']
 
-    if not streaming:
-        parsed_output = run_ocperf(workload, events, interval)
-        p = plot_parsed_ocperf_output(parsed_output)
+    kwargs = {
+        "doc": doc,
+        "workload": workload,
+        "events": events,
+        "interval": interval,
+        "source": source,
+    }
 
-        doc = curdoc()
-        doc.add_root(p)
-        session = push_session(doc)
-        script = autoload_server(model=p, session_id=session.id)
-        return Response(script)
+    if not streaming:
+        parsed_output = run_ocperf(**kwargs)
+        p = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
     elif streaming:
-        print("doing streaming branch")
-
-        doc = curdoc()
-        session = push_session(doc)
-
-        print("[REGISTER] Source ID: " + str(id(source)))
-
-        p = figure(title="streaming plot", toolbar_sticky=False)
-        l = p.line(x='x', y='y', source=source)
-
-        kwargs = {
-            "doc": doc,
-            "workload": workload,
-            "events": events,
-            "interval": interval,
-            "source": source,
-        }
-
-        doc.add_root(p)
-
         thread = Thread(target=blocking_task, kwargs=kwargs)
         thread.start()
 
         session_thread = Thread(target=session_task, kwargs={"session":session})
         session_thread.start()
 
+        p = plot_parsed_ocperf_output(source=source)
 
-        script = autoload_server(model=p, session_id=session.id)
-
-        return Response(script)
+    doc.add_root(p)
+    script = autoload_server(model=p, session_id=session.id)
+    return Response(script)
 
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():

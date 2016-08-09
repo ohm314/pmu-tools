@@ -127,7 +127,7 @@ def get_combined_emap():
 def serialize_emap(emap):
     return json.dumps(emap)
 
-def run_ocperf(workload, events, interval):
+def run_ocperf(workload, events, interval, doc=None, source=None):
     """
     workload - command to profile represented as list of strings like .split(' ')
     events - list of symbolic names of events to count

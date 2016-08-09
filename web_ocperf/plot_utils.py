@@ -4,21 +4,31 @@ from bokeh.palettes import inferno
 
 from os import path
 
-def plot_parsed_ocperf_output(parsed_output):
-    color_idx = 0
-    palette = inferno(len(parsed_output.keys()))
+def plot_parsed_ocperf_output(parsed_output=None, source=None):
+    if parsed_output and source:
+        raise Exception("Can't do streaming and static plot at the same time")
 
-    p = figure(plot_width=800)
+    if not parsed_output and not source:
+        raise Exception("Must provide at least one data source!")
 
-    for k in parsed_output.keys():
-        samples = parsed_output[k]
 
-        x = [sample[0] for sample in samples]
-        y = [sample[1] for sample in samples]
+    p = figure(toolbar_sticky=False)
 
-        p.line(x, y, color=palette[color_idx], legend=k)
+    if parsed_output:
+        color_idx = 0
+        palette = inferno(len(parsed_output.keys()))
 
-        color_idx += 1
+        for k in parsed_output.keys():
+            samples = parsed_output[k]
+
+            x = [sample[0] for sample in samples]
+            y = [sample[1] for sample in samples]
+
+            p.line(x, y, color=palette[color_idx], legend=k)
+
+            color_idx += 1
+    else:
+        l = p.line(x='x', y='y', source=source)
 
     return p
 
