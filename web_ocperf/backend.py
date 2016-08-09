@@ -1,16 +1,5 @@
 #!/usr/bin/python2
-# standard python imports
-from os import path
-import sys
-import json
 from threading import Thread
-
-import ocperf as ocp
-
-# utils for web_ocperf
-from plot_utils import plot_parsed_ocperf_output, store_plot_at
-from ocperf_utils import *
-from streaming import *
 
 # flask related imports
 from flask import (
@@ -18,18 +7,23 @@ from flask import (
     Response,
     request,
     send_from_directory,
-    render_template,
 )
 
 # bokeh related imports
-from bokeh.client import push_session, pull_session
+from bokeh.client import push_session
 from bokeh.models import ColumnDataSource
-from bokeh.plotting import curdoc, figure, show
-from bokeh.embed import autoload_server, components
+from bokeh.plotting import curdoc, figure
+from bokeh.embed import autoload_server
 
+# utils for web_ocperf
+import ocperf as ocp
+from plot_utils import plot_parsed_ocperf_output
+from ocperf_utils import *
+from streaming import *
+
+# globals
 app = Flask("ocperf server", static_url_path='')
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
-doc = None
 
 @app.route("/api/v1/run", methods=['POST'])
 def rest_run_endpoint():
