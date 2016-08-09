@@ -3,12 +3,12 @@
     <head>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
-        <!-- <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular-sanitize.js"></script> -->
+        <script src="https://code.angularjs.org/1.5.8/angular-touch.min.js"></script>
+        <script src="https://code.angularjs.org/1.5.8/angular-animate.min.js"></script>
 
-        <!-- <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.css" type="text/css" /> -->
-        <!-- <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.0.min.js"></script> -->
         <script src="/js/index.js"></script>
         <script src="/js/checklist-model.js"></script>
+        <script src="/js/ui-bootstrap-tpls-2.0.1.min.js"></script>
 
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
@@ -45,23 +45,49 @@
                 <!-- right side (2 rows) -->
                 <div class="col-md-8">
                     <div class="row">
-                        <div class="col-md-2">
-                            <label for="streaming">Streaming</label>
-                            <input type="checkbox" ng-model="streaming" id="streaming">
-                        </div>
+                        <!-- <div class="col-md-2"> -->
+                        <!-- <label for="streaming">Streaming</label> -->
+                        <!-- <input type="checkbox" ng-model="streaming" id="streaming"> -->
+                        <!-- </div> -->
 
-                        <div class="col-md-2">
-                            <label for="interval">Interval [ms]</label>
-                            <input ng-model="interval" type="text" id="interval" class="form-control">
-                        </div>
+                        <!-- <div class="col-md-2"> -->
+                        <!-- <label for="interval">Interval [ms]</label> -->
+                        <!-- <input ng-model="interval" type="text" id="interval" class="form-control" ng-disabled="!streaming"> -->
+                        <!-- </div> -->
 
-                        <div class="col-md-6" align="center">
-                            <button class="btn btn-primary btn-block" type="button" ng-click="run()">run perf</button>
-                        </div>
+                        <!-- <div class="col-md-6" align="center"> -->
+                        <!-- <button class="btn btn-primary btn-block" type="button" ng-click="run()">run perf</button> -->
+                        <!-- </div> -->
+
+                        <form class="form-inline">
+                            <div class="btn-group">
+                                <label class="btn btn-default" ng-model="tool" uib-btn-radio="'stat'">stat</label>
+                                <label class="btn btn-default" ng-model="tool" uib-btn-radio="'record'">record</label>
+                            </div>
+
+
+                            <div class="form-group" ng-if="tool === 'stat'">
+                                <div class="input-group">
+                                    <!-- <label for="streaming">streaming</label> -->
+                                    <!-- <input type="checkbox" ng-model="streaming" id="streaming"> -->
+                                    <label>
+                                        <input type="checkbox" ng-model="streaming" id="streaming"> Streaming
+                                    </label>
+                                </div>
+
+                                <div class="input-group">
+                                    <input type="text" class="form-control"
+                                           ng-disabled="!streaming" placeholder="interval"
+                                           ng-model="interval">
+                                    <span class="input-group-addon">[ms]</span>
+                                </div>
+                            </div>
+
+                            <label class="btn btn-primary" ng-click="run()">run perf</label>
+                        </form>
                     </div>
 
                     <div class="row" width="100%">
-                        <!-- <div ng-bind-html="plain_html"></div> -->
                         <div id="plot_autoload_script" class="bk-root"></div>
                     </div>
                 </div>

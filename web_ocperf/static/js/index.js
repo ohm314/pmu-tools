@@ -1,5 +1,5 @@
 /* jshint globals: false */
-angular.module('ocperfApp', ['checklist-model'])
+angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap'])
     .service('ocperf_rest', function($http) {
         function get_emap() {
             return $http.get('/api/v1/emap').then(function(response) {
@@ -17,6 +17,7 @@ angular.module('ocperfApp', ['checklist-model'])
         $scope.interval = 100;
         $scope.search_term = "";
         $scope.streaming = true;
+        $scope.tool = "stat";
 
         function fetchPlot(response) {
             var s_tag = response.data;

@@ -37,6 +37,11 @@ def rest_run_endpoint():
     interval = d['interval']
     streaming = d['streaming']
 
+    try:
+        tool = d['tool']
+    except:
+        tool = "stat"
+
     kwargs = {
         "doc": doc,
         "workload": workload,
