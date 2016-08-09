@@ -1,5 +1,5 @@
 /* jshint globals: false */
-angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
+angular.module('ocperfApp', ['checklist-model'])
     .service('ocperf_rest', function($http) {
         function get_emap() {
             return $http.get('/api/v1/emap').then(function(response) {
@@ -20,7 +20,7 @@ angular.module('ocperfApp', ['ngSanitize', "checklist-model"])
 
         function fetchPlot(response) {
             var s_tag = response.data;
-            $("#some_script").append($(s_tag));
+            $("#plot_autoload_script").append($(s_tag));
         }
 
         $scope.run = function() {
