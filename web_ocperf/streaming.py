@@ -58,7 +58,6 @@ def blocking_task(doc, workload, events, interval, source):
     pipe = ocp.get_perf_output_pipe(perf_cmd)
 
     while True:
-        # print("in tha loop")
         out = pipe.stderr.readline()
 
         if out == '':

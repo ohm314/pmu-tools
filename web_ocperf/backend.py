@@ -43,8 +43,13 @@ def rest_run_endpoint():
     if not streaming:
         parsed_output = run_ocperf(workload, events, interval)
         p = plot_parsed_ocperf_output(parsed_output)
-        store_plot_at(p, "tmp")
-        return Response(json.dumps(parsed_output, indent=2), mimetype="application/json")
+
+        doc = curdoc()
+        doc.add_root(p)
+        session = push_session(doc)
+        script = autoload_server(model=p, session_id=session.id)
+        return Response(script)
+
     elif streaming:
         print("doing streaming branch")
 
@@ -75,24 +80,6 @@ def rest_run_endpoint():
 
         script = autoload_server(model=p, session_id=session.id)
 
-        # store_plot_at(doc, "tmp")
-        with open("./tmp/autoload_script.js", "w") as f:
-            f.write(script)
-
-        template = """ <html>
-          <head>
-          </head>
-          <body>
-            <div class="bk-root">
-                {}
-            </div>
-          </body>
-        </html>
-        """
-
-        with open("/tmp/index.html", "w") as f:
-            f.write(template.format(script))
-
         return Response(script)
 
 @app.route("/api/v1/emap", methods=['GET'])
@@ -109,10 +96,6 @@ def index():
 @app.route("/js/<path:path>")
 def static_js(path):
     return send_from_directory('static/js', path)
-
-@app.route("/plot/autoload_script.js")
-def get_autoload_script():
-    return send_from_directory('tmp', 'autoload_script.js')
 
 if __name__ == "__main__":
     app.run(debug=True)
