@@ -45,31 +45,15 @@
                 <!-- right side (2 rows) -->
                 <div class="col-md-8">
                     <div class="row">
-                        <!-- <div class="col-md-2"> -->
-                        <!-- <label for="streaming">Streaming</label> -->
-                        <!-- <input type="checkbox" ng-model="streaming" id="streaming"> -->
-                        <!-- </div> -->
-
-                        <!-- <div class="col-md-2"> -->
-                        <!-- <label for="interval">Interval [ms]</label> -->
-                        <!-- <input ng-model="interval" type="text" id="interval" class="form-control" ng-disabled="!streaming"> -->
-                        <!-- </div> -->
-
-                        <!-- <div class="col-md-6" align="center"> -->
-                        <!-- <button class="btn btn-primary btn-block" type="button" ng-click="run()">run perf</button> -->
-                        <!-- </div> -->
-
-                        <form class="form-inline">
+                        <form novalidate class="form-inline">
                             <div class="btn-group">
                                 <label class="btn btn-default" ng-model="tool" uib-btn-radio="'stat'">stat</label>
                                 <label class="btn btn-default" ng-model="tool" uib-btn-radio="'record'">record</label>
                             </div>
 
 
-                            <div class="form-group" ng-if="tool === 'stat'">
+                            <div class="form-group" ng-show="tool === 'stat'">
                                 <div class="input-group">
-                                    <!-- <label for="streaming">streaming</label> -->
-                                    <!-- <input type="checkbox" ng-model="streaming" id="streaming"> -->
                                     <label>
                                         <input type="checkbox" ng-model="streaming" id="streaming"> Streaming
                                     </label>
@@ -77,7 +61,7 @@
 
                                 <div class="input-group">
                                     <input type="text" class="form-control"
-                                           ng-disabled="!streaming" placeholder="interval"
+                                           placeholder="interval"
                                            ng-model="interval">
                                     <span class="input-group-addon">[ms]</span>
                                 </div>

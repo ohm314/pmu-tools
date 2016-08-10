@@ -36,7 +36,7 @@ def session_task(session):
     session.loop_until_closed()
     print("closed!")
 
-def blocking_task(doc, workload, events, interval, source):
+def blocking_task(tool, doc, workload, events, interval, source):
     # dirty fix for py2 incompatibility between @wraps and partial from functools
     # this should be just: from functools import partial
     # more info: http://bit.ly/29xoM9p
@@ -52,7 +52,7 @@ def blocking_task(doc, workload, events, interval, source):
 
     print("inside streaming thread")
 
-    ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
+    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events, interval=interval)
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     pipe = ocp.get_perf_output_pipe(perf_cmd)

@@ -4,14 +4,26 @@ import json
 import sys
 
 
-def build_ocperf_cmd(workload, events_list=None, interval=None):
-    cmd = ["perf", "stat", "-x", ","]
+def build_ocperf_cmd(tool, workload, events_list=None, interval=None):
+    cmd = None
 
-    if events_list:
-        cmd += ["-e", ",".join(events_list)]
+    if tool == "stat":
+        cmd = ["perf", "stat", "-x", ","]
 
-    if interval:
-        cmd += ["-I", str(interval)]
+        if events_list:
+            cmd += ["-e", ",".join(events_list)]
+
+        if interval:
+            cmd += ["-I", str(interval)]
+
+    elif tool == "record":
+        cmd = ["perf", "record", "-o", "_perf.data"]
+
+        if events_list:
+            cmd += ["-e", ",".join(events_list)]
+
+        # TODO: add support for setting frequency with -F flag
+
 
     cmd += workload
     return cmd
@@ -127,15 +139,26 @@ def get_combined_emap():
 def serialize_emap(emap):
     return json.dumps(emap)
 
-def run_ocperf(workload, events, interval, doc=None, source=None):
+def run_ocperf(tool, workload, events, interval, doc=None, source=None):
     """
     workload - command to profile represented as list of strings like .split(' ')
     events - list of symbolic names of events to count
     interval - sampling interval
     """
-    ocperf_cmd = build_ocperf_cmd(workload, events_list=events, interval=interval)
+    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events, interval=interval)
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
-    raw_perf_output = ocp.get_perf_output(perf_cmd)
-    parsed_perf_output = parse_output(raw_perf_output)
+
+    raw_perf_output = None
+    parsed_perf_output = ""
+
+    if tool == "stat":
+        raw_perf_output = ocp.get_perf_output(perf_cmd)
+        parsed_perf_output = parse_output(raw_perf_output)
+
+    elif tool == "record":
+        # ocp.perf_cmd(perf_cmd)
+        raw_perf_output = ocp.get_perf_output(perf_cmd)
+        # TODO: should call perf script to parse perf.data
+
     return parsed_perf_output

@@ -856,42 +856,7 @@ def perf_cmd(cmd):
         pipe.close()
         latego.cleanup()
     else:
-        sys.exit(subprocess.call(cmd))
-
-
-def async_stdout_handler(cmd, callback, direct=True):
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-    flags = fcntl(p.stdout, F_GETFL)
-
-    buff = []
-    reading = False
-    output = ''
-    while True:
-        try:
-            output = p.stdout.readline()
-        except:
-            output = ''
-
-        if output != '' and not reading:
-            fcntl(p.stdout, F_SETFL, flags | O_NONBLOCK)
-            reading = True
-
-        if output != '' and reading:
-            buff.append(output)
-
-        if output == '' and p.poll() is None and reading:
-            fcntl(p.stdout, F_SETFL, flags & ~O_NONBLOCK)
-            reading = False
-
-        if output == '' and len(buff) != 0:
-            callback(buff)
-            buff = []
-
-        if output == '' and p.poll() is not None:
-            return p.poll()
-
-def perf_readline(pipe):
-    return pipe.stdout.readline()
+        sys.exit(subprocess.call(cmd, stdout=None))
 
 def get_perf_output_pipe(cmd):
     if len(cmd) >= 2 and cmd[1] == "list":
@@ -904,99 +869,21 @@ def get_perf_output_pipe(cmd):
                 if w == "--tui":
                     direct = True
                     break
-        if direct:
-            # TODO: this is part of async handler no
-            pipe = subprocess.Popen(cmd,
-                                    stdout=open(os.devnull),
-                                    stderr=subprocess.PIPE, universal_newlines=True)
+        # if direct:
+        pipe = subprocess.Popen(cmd,
+                                stdout=open(os.devnull),
+                                stderr=subprocess.PIPE, universal_newlines=True)
 
-            return pipe
-
-            # TODO: this has to be removed
-            # (out, err) = pipe.communicate()
-            # async_stdout_handler(cmd, callback)
-
-            # whatever
-            # latego.cleanup()
-            # return
-            # return err
-            # sys.exit(ret)
-        try:
-            # TODO: this is part of callback, too
-            pipe = subprocess.Popen(cmd,
-                                    stdout=open(os.devnull),
-                                    stderr=subprocess.PIPE,
-                                    universal_newlines=True, close_fds=True)
-
-            return pipe
-
-            # async_stdout_handler(cmd, callback, direct=False)
-
-            # TODO: move this out to async handler
-            # raw = lambda e: " " + emap.getraw(int(e.group(1), 16))
-            # for i in pipe:
-            #     i = re.sub("[rR]aw 0x([0-9a-f]{4,})", raw, i)
-            #     i = re.sub("r([0-9a-f]{4,})", raw, i)
-            #     i = re.sub("(cpu/.*?/)", lambda e: emap.getperf(e.group(1)), i)
-
-                # TODO: don't print, call the callback instead
-                # print i,
-        except IOError:
-            pass
-        # pipe.close()
         latego.cleanup()
+        return pipe
     else:
         sys.exit(subprocess.call(cmd))
 
-def get_perf_output_async(cmd, callback):
-    if len(cmd) >= 2 and cmd[1] == "list":
-        raise Exception("this is only used for stat with interval")
-
-    elif len(cmd) >= 2 and (cmd[1] == "report" or cmd[1] == "stat"):
-        direct = version.has_name
-        if not direct:
-            for w in cmd:
-                if w == "--tui":
-                    direct = True
-                    break
-        if direct:
-            # TODO: this is part of async handler no
-            # pipe = subprocess.Popen(cmd,
-            #                         stdout=subprocess.PIPE,
-            #                         stderr=subprocess.PIPE)
-
-            # TODO: this has to be removed
-            # (out, err) = pipe.communicate()
-            async_stdout_handler(cmd, callback)
-
-            # whatever
-            latego.cleanup()
-            return
-            # return err
-            # sys.exit(ret)
-        try:
-            # TODO: this is part of callback, too
-            # pipe = subprocess.Popen(cmd,
-            #                         stdout=subprocess.PIPE,
-            #                         stderr=subprocess.STDOUT).stdout
-
-            async_stdout_handler(cmd, callback, direct=False)
-
-            # TODO: move this out to async handler
-            # raw = lambda e: " " + emap.getraw(int(e.group(1), 16))
-            # for i in pipe:
-            #     i = re.sub("[rR]aw 0x([0-9a-f]{4,})", raw, i)
-            #     i = re.sub("r([0-9a-f]{4,})", raw, i)
-            #     i = re.sub("(cpu/.*?/)", lambda e: emap.getperf(e.group(1)), i)
-
-                # TODO: don't print, call the callback instead
-                # print i,
-        except IOError:
-            pass
-        # pipe.close()
-        latego.cleanup()
-    else:
-        sys.exit(subprocess.call(cmd))
+def replace_raw_names_in_line(line):
+    line = re.sub("[rR]aw 0x([0-9a-f]{4,})", raw, line)
+    line = re.sub("r([0-9a-f]{4,})", raw, line)
+    line = re.sub("(cpu/.*?/)", lambda e: emap.getperf(e.group(1)), line)
+    return line
 
 
 def get_perf_output(cmd):
@@ -1012,7 +899,6 @@ def get_perf_output(cmd):
                 proc.wait()
         except IOError:
             pass
-    # elif len(argv) >= 2 and (argv[1] == "report" or argv[1] == "stat"):
     elif len(cmd) >= 2 and (cmd[1] == "report" or cmd[1] == "stat"):
         direct = version.has_name
         if not direct:
@@ -1020,30 +906,11 @@ def get_perf_output(cmd):
                 if w == "--tui":
                     direct = True
                     break
-        if direct:
-            pipe = subprocess.Popen(cmd,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            (out, err) = pipe.communicate()
-            latego.cleanup()
-            return err
-            # sys.exit(ret)
-        try:
-            pipe = subprocess.Popen(cmd,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT).stdout
-            raw = lambda e: " " + emap.getraw(int(e.group(1), 16))
-            for i in pipe:
-                i = re.sub("[rR]aw 0x([0-9a-f]{4,})", raw, i)
-                i = re.sub("r([0-9a-f]{4,})", raw, i)
-                i = re.sub("(cpu/.*?/)", lambda e: emap.getperf(e.group(1)), i)
-                print i,
-        except IOError:
-            pass
-        pipe.close()
-        latego.cleanup()
-    else:
-        sys.exit(subprocess.call(cmd))
+        pipe = subprocess.Popen(cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        (out, err) = pipe.communicate()
+        return err
 
 if __name__ == '__main__':
     for j in sys.argv:

@@ -26,6 +26,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap'])
 
         $scope.run = function() {
             var data = {
+                tool: $scope.tool,
                 workload: $scope.workload,
                 events: $scope.events,
                 interval: $scope.interval,

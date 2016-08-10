@@ -36,13 +36,10 @@ def rest_run_endpoint():
     events = d['events']
     interval = d['interval']
     streaming = d['streaming']
-
-    try:
-        tool = d['tool']
-    except:
-        tool = "stat"
+    tool = d['tool']
 
     kwargs = {
+        "tool": tool,
         "doc": doc,
         "workload": workload,
         "events": events,
@@ -50,18 +47,24 @@ def rest_run_endpoint():
         "source": source,
     }
 
-    if not streaming:
+    if tool == "record":
         parsed_output = run_ocperf(**kwargs)
         p = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
-    elif streaming:
-        thread = Thread(target=blocking_task, kwargs=kwargs)
-        thread.start()
+    elif tool == "stat":
+        if not streaming:
+            parsed_output = run_ocperf(**kwargs)
+            p = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
-        session_thread = Thread(target=session_task, kwargs={"session":session})
-        session_thread.start()
+        elif streaming:
+            thread = Thread(target=blocking_task, kwargs=kwargs)
+            session_thread = Thread(target=session_task,
+                                    kwargs={"session":session})
 
-        p = plot_parsed_ocperf_output(source=source)
+            thread.start()
+            session_thread.start()
+
+            p = plot_parsed_ocperf_output(source=source)
 
     doc.add_root(p)
     script = autoload_server(model=p, session_id=session.id)
