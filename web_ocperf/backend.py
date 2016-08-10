@@ -66,7 +66,9 @@ def rest_run_endpoint():
 
             p = plot_parsed_ocperf_output(source=source)
 
-    doc.add_root(p)
+    if p:
+        doc.add_root(p)
+
     script = autoload_server(model=p, session_id=session.id)
     return Response(script)
 

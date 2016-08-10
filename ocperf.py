@@ -899,7 +899,7 @@ def get_perf_output(cmd):
                 proc.wait()
         except IOError:
             pass
-    elif len(cmd) >= 2 and (cmd[1] == "report" or cmd[1] == "stat"):
+    elif len(cmd) >= 2 and (cmd[1] == "record" or cmd[1] == "stat"):
         direct = version.has_name
         if not direct:
             for w in cmd:

@@ -2,6 +2,8 @@ import ocperf as ocp
 from os import path
 import json
 import sys
+import subprocess
+import re
 
 
 def build_ocperf_cmd(tool, workload, events_list=None, interval=None):
@@ -83,6 +85,24 @@ def parse_output(raw_output):
 
     return output
 
+def parse_perf_record_output(raw_output):
+    output = {}
+
+    for line in raw_output.split('\n')[:-1]:
+        line = re.sub(r"\s+", " ", line)
+        cols = line.strip(' ').split(' ')
+
+        timestamp = float(cols[2].strip(':'))
+        value = int(cols[3])
+        event_name = cols[4].strip(':')
+
+        if event_name not in output.keys():
+            output[event_name] = []
+
+        output[event_name].append( [timestamp, value] )
+
+    return output
+
 def print_parsed(parsed_output):
     print("="*RULE_LEN)
 
@@ -157,8 +177,10 @@ def run_ocperf(tool, workload, events, interval, doc=None, source=None):
         parsed_perf_output = parse_output(raw_perf_output)
 
     elif tool == "record":
-        # ocp.perf_cmd(perf_cmd)
         raw_perf_output = ocp.get_perf_output(perf_cmd)
-        # TODO: should call perf script to parse perf.data
+
+        p = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE)
+        (out, err) = p.communicate()
+        parsed_perf_output = parse_perf_record_output(out)
 
     return parsed_perf_output
