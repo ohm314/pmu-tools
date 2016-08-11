@@ -1,1 +1,11 @@
-<h1>Homepage</h1>
+<div class="col-md-12">
+    <form novalidate class="form-inline">
+        <label for="session_title">Session title</label>
+        <input id="session_title" type="text" ng-model="session_title" class="form-control">
+
+        <button class="btn btn-default form-control" ng-click="new_session(session_title)">
+            Create new session
+        </button>
+    </form>
+    {{ session_title  }}
+</div>

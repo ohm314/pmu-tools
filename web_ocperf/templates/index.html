@@ -18,8 +18,21 @@
         <link rel="stylesheet" href="/css/style.css">
     </head>
 
-    <body ng-view>
+    <body>
+        <div class="container full-height">
 
+            <nav class="navbar navbar-default">
+                <ul class="nav navbar-nav">
+                    <li><a href="/#/">Sessions</a></li>
+                    <li><a href="/#/benchmark">Benchmarks</a></li>
+                    <li><a href="/#/this_run">This run</a></li>
+                </ul>
+            </nav>
+
+            <div ng-view class="full-height col-md-12">
+            </div>
+
+        </div>
     </body>
 
 </html>

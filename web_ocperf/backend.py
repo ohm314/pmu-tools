@@ -1,5 +1,8 @@
 #!/usr/bin/python2
 from threading import Thread
+import json
+import uuid
+from random import random
 
 # flask related imports
 from flask import (
@@ -79,6 +82,34 @@ def rest_emap_endpoint():
 
     return Response(json_emap, mimetype="application/json")
 
+@app.route("/api/v1/session/", methods=['GET', 'POST'])
+def reset_sessions_endpoint():
+    # def build_session(title, uid, date, cnt):
+    #     d = {
+    #         "title": title,
+    #         "uid": uid,
+    #         "date": date,
+    #         "cnt": cnt,
+    #     }
+
+    #     return d
+
+    # sessions = []
+    # sessions.append(build_session("session_1", uuid.uuid4().get_hex(), "now", random()))
+    # sessions.append(build_session("session_2", uuid.uuid4().get_hex(), "now", random()))
+    # sessions.append(build_session("session_3", uuid.uuid4().get_hex(), "now", random()))
+    # sessions.append(build_session("session_4", uuid.uuid4().get_hex(), "now", random()))
+
+    # json_sessions = json.dumps(sessions, indent=2)
+
+    if request.method == 'GET':
+        pass
+    elif request.method == 'POST':
+        pass
+
+    # return Response(json_sessions, mimetype="application/json")
+    return Response("ok")
+
 @app.route("/")
 def index():
     return send_from_directory("templates", "index.html")
@@ -90,6 +121,7 @@ def static_js(path):
 @app.route("/templates/<path:path>")
 def static_html(path):
     return send_from_directory('templates', path)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
