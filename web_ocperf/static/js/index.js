@@ -1,5 +1,5 @@
 /* jshint globals: false */
-angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap'])
+angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute'])
     .service('ocperf_rest', function($http) {
         function get_emap() {
             return $http.get('/api/v1/emap').then(function(response) {
@@ -11,7 +11,22 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap'])
             get_emap: get_emap
         };
     })
-    .controller('ocperfCtrl', function($scope, $http, ocperf_rest) {
+    .config(function($locationProvider, $routeProvider) {
+                $routeProvider.
+                    when('/', {
+                        templateUrl: '/templates/homepage.html'
+                    }).
+                    when('/session', {
+                        templateUrl: '/templates/session.html'
+                    }).
+                    when('/benchmark', {
+                        templateUrl: '/templates/benchmark.html',
+                        controller: 'benchmarkCtrl'
+                    }).
+                    otherwise('/');
+            }
+           )
+    .controller('benchmarkCtrl', function($scope, $http, ocperf_rest) {
         $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
         $scope.events = ["arith.mul"];
         $scope.interval = 100;

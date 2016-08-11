@@ -1,0 +1,59 @@
+<div class="container wrapper full-height">
+
+    <!-- upper workload input -->
+    <div class="row">
+        <label for="workload">Workload</label>
+        <input ng-model="workload" type="text" id="workload" class="form-control"> <br/>
+    </div>
+
+    <!-- row for both left and right side, the main container actually -->
+    <div class="row full-height">
+
+        <!-- left side (list of events) -->
+        <div class="col-md-4 full-height">
+            <input class="form-control" ng-model="search_term">
+
+            <div style="overflow: scroll; height: 85%;">
+                <div ng-repeat="entry in emap | filter:search_term | orderBy:'sym'"
+                        data-toggle="tooltip" data-placement="right" title="{{entry.desc}}">
+                    <input type="checkbox" checklist-model="events" checklist-value="entry.sym"> {{ entry.sym }}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- right side (2 rows) -->
+        <div class="col-md-8">
+            <div class="row">
+                <form novalidate class="form-inline">
+                    <div class="btn-group">
+                        <label class="btn btn-default" ng-model="tool" uib-btn-radio="'stat'">stat</label>
+                        <label class="btn btn-default" ng-model="tool" uib-btn-radio="'record'">record</label>
+                    </div>
+
+
+                    <div class="form-group" ng-show="tool === 'stat'">
+                        <div class="input-group">
+                            <label>
+                                <input type="checkbox" ng-model="streaming" id="streaming"> Streaming
+                            </label>
+                        </div>
+
+                        <div class="input-group">
+                            <input type="text" class="form-control"
+                                    placeholder="interval"
+                                    ng-model="interval">
+                            <span class="input-group-addon">[ms]</span>
+                        </div>
+                    </div>
+
+                    <label class="btn btn-primary" ng-click="run()">run perf</label>
+                </form>
+            </div>
+
+            <div class="row" width="100%">
+                <div id="plot_autoload_script" class="bk-root"></div>
+            </div>
+        </div>
+    </div>
+</div>

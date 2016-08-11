@@ -87,5 +87,9 @@ def index():
 def static_js(path):
     return send_from_directory('static/js', path)
 
+@app.route("/templates/<path:path>")
+def static_html(path):
+    return send_from_directory('templates', path)
+
 if __name__ == "__main__":
     app.run(debug=True)
