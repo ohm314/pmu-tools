@@ -7,5 +7,16 @@
             Create new session
         </button>
     </form>
-    {{ session_title  }}
+
+    <table class="table table-stripped table-hover">
+        <tr ng-repeat="session in sessions_list | orderBy: '-date_created' | filter:session_title">
+            <td> {{session.title}} </td>
+
+            <td style="font-family: monospace">
+                <a href="#/session/{{session.uuid}}/">{{session.uuid}}</a>
+            </td>
+
+            <td> {{ session.date_created | date : 'medium'}} </td>
+        </tr>
+    </table>
 </div>

@@ -2,7 +2,13 @@
 from threading import Thread
 import json
 import uuid
+from datetime import datetime
+
 from random import random
+import peewee as pw
+# from playhouse.flask_utils import FlaskDB
+from marshmallow import Schema, fields
+from marshmallow_peewee import ModelSchema
 
 # flask related imports
 from flask import (
@@ -10,6 +16,8 @@ from flask import (
     Response,
     request,
     send_from_directory,
+    g,
+    jsonify,
 )
 
 # bokeh related imports
@@ -25,8 +33,89 @@ from ocperf_utils import *
 from streaming import *
 
 # globals
+DATABASE = './web_ocperf.sqlt'
+
 app = Flask("ocperf server", static_url_path='')
+app.config.from_object(__name__)
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
+db = pw.SqliteDatabase(DATABASE)
+
+#--------- HELPERS ------------
+@app.before_request
+def before_request():
+    g.db = db
+    g.db.connect()
+
+@app.after_request
+def after_request(response):
+    g.db.close()
+    return response
+
+#--------- MODELS -------------
+class BaseModel(pw.Model):
+    class Meta:
+        database = db
+
+class SessionModel(BaseModel):
+    title = pw.CharField(default="no title")
+    uuid = pw.UUIDField(default=uuid.uuid4)
+    date_created = pw.DateTimeField(default=datetime.utcnow)
+    # date_updated = pw.DateTimeField()
+
+class BenchmarkModel(BaseModel):
+    session = pw.ForeignKeyField(SessionModel, related_name='benchmarks')
+    date_created = pw.DateTimeField(default=datetime.utcnow)
+    uuid = pw.UUIDField(default=uuid.uuid4)
+
+def create_tables():
+    db.connect()
+
+    for table in [SessionModel, BenchmarkModel]:
+        table.drop_table()
+        table.create_table(True)
+
+#---------- SCHEMAS -----------
+class SessionSchema(Schema):
+    title = fields.Str()
+    uuid = fields.UUID()
+    date_created = fields.DateTime()
+    # TODO date_updated = fields.Date(dump_only=True)
+
+class BenchmarkSchema(Schema):
+    session = fields.Nested(SessionSchema, only=['uuid'])
+    date_created = fields.DateTime()
+    uuid = fields.UUID()
+
+@app.route("/api/v1/session/", methods=['GET', 'POST'])
+def rest_sessions_endpoint():
+    if request.method == 'GET':
+        sessions = SessionModel.select()
+        result = SessionSchema(many=True).dump(list(sessions))
+        return jsonify(result.data)
+
+    elif request.method == 'POST':
+        title = request.get_json()['session_title']
+        print("Create me this session, please: " + title)
+
+        s = SessionModel.create(title=title)
+        json_s, err = SessionSchema().dumps(s)
+
+        return Response(json_s, mimetype="application/json")
+
+@app.route("/api/v1/session/<uuid:session_uuid>", methods=['GET', 'POST'])
+def rest_single_session_endpoint(session_uuid):
+    if request.method == 'GET':
+        session = SessionModel.get(SessionModel.uuid==session_uuid)
+        result = BenchmarkSchema().dumps(session.benchmarks, many=True)
+        return result.data
+
+    elif request.method == 'POST':
+        print(session_uuid)
+        session = SessionModel.get(SessionModel.uuid==session_uuid)
+        benchmark = BenchmarkModel.create(session=session)
+        result = BenchmarkSchema().dumps(benchmark)
+        return jsonify(result.data)
+
 
 @app.route("/api/v1/run", methods=['POST'])
 def rest_run_endpoint():
@@ -82,33 +171,7 @@ def rest_emap_endpoint():
 
     return Response(json_emap, mimetype="application/json")
 
-@app.route("/api/v1/session/", methods=['GET', 'POST'])
-def reset_sessions_endpoint():
-    # def build_session(title, uid, date, cnt):
-    #     d = {
-    #         "title": title,
-    #         "uid": uid,
-    #         "date": date,
-    #         "cnt": cnt,
-    #     }
 
-    #     return d
-
-    # sessions = []
-    # sessions.append(build_session("session_1", uuid.uuid4().get_hex(), "now", random()))
-    # sessions.append(build_session("session_2", uuid.uuid4().get_hex(), "now", random()))
-    # sessions.append(build_session("session_3", uuid.uuid4().get_hex(), "now", random()))
-    # sessions.append(build_session("session_4", uuid.uuid4().get_hex(), "now", random()))
-
-    # json_sessions = json.dumps(sessions, indent=2)
-
-    if request.method == 'GET':
-        pass
-    elif request.method == 'POST':
-        pass
-
-    # return Response(json_sessions, mimetype="application/json")
-    return Response("ok")
 
 @app.route("/")
 def index():
@@ -124,4 +187,5 @@ def static_html(path):
 
 
 if __name__ == "__main__":
+    create_tables()
     app.run(debug=True)
