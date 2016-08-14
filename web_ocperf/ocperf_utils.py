@@ -125,12 +125,36 @@ def get_ocperf_emap():
     for k in emap.events.keys():
         d.append( {"sym":k, "desc":emap.desc[k]} )
 
-    for k in emap.uncore_events.keys():
-        d.append( {"sym":k, "desc":emap.uncored_events[k].desc} )
+    try:
+        for k in emap.uncore_events.keys():
+            d.append( {"sym":k, "desc":emap.uncored_events[k].desc} )
+    except:
+        pass
 
     return d
 
+def parse_raw_perf_list():
+    import re
+    from subprocess import Popen, PIPE
+
+    workload = ["perf", "list"]
+    matcher = r"\s+(\S+)\s+.*\[([Hardware|Software|Kernel].*event)\]"
+    p = re.compile(matcher)
+
+    (out, err) = Popen(workload, stdout=PIPE).communicate()
+
+    events_list = []
+
+    for line in out.split('\n'):
+        m = p.search(line)
+
+        if m:
+            events_list.append(m.groups()[0])
+
+    return events_list
+
 def get_perf_emap():
+    print("calling perf emap")
     import subprocess
     args = ["perf", "list", "--raw-dump"]
     l = []
@@ -141,12 +165,14 @@ def get_perf_emap():
     events_list_str = p.stdout.read()
     ret = p.poll()
 
-    if ret != 0:
-        raise Exception("Something went wrong with perf list!")
+    if ret == 0:
+        for event in events_list_str.split(' '):
+            l.append({"sym": event, "desc": NO_DESC})
+    else:
+        events_list = parse_raw_perf_list()
 
-    for event in events_list_str.split(' '):
-        l.append({"sym": event, "desc": NO_DESC})
-
+        for event in events_list:
+            l.append({"sym": event, "desc": NO_DESC})
 
     return l
 
@@ -154,7 +180,9 @@ def get_combined_emap():
     ocperf_emap = get_ocperf_emap()
     perf_emap = get_perf_emap()
 
-    return ocperf_emap + perf_emap
+    combined_emap = perf_emap + ocperf_emap
+
+    return combined_emap
 
 def serialize_emap(emap):
     return json.dumps(emap)
