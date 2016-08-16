@@ -23,11 +23,20 @@
             </div>
 
             <div style="overflow: scroll; height: 85%; background-colour: red;">
-              <ul>
-                <li ng-repeat="benchmark in benchmarks_list">
-                  <p ng-click="loadOldPlot(benchmark.uuid)">{{ benchmark.uuid | limitTo : 8}}</p>
-                </li>
-              <ul>
+                <table class="table table-stripped table-hover">
+                    <tr ng-repeat="benchmark in benchmarks_list">
+                        <td>
+                            <a ng-click="loadOldPlot(benchmark.uuid)" href="">
+                                {{ benchmark.uuid | limitTo : 8}}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/api/v1/benchmark/{{ benchmark.uuid }}.perflog" download>
+                                <span class="glyphicon glyphicon-download-alt"></span>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
         </div>

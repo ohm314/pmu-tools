@@ -72,7 +72,7 @@ def create_tables():
     db.connect()
 
     for table in [SessionModel, BenchmarkModel]:
-        table.drop_table()
+        # table.drop_table()
         table.create_table(True)
 
 #---------- SCHEMAS -----------
@@ -218,6 +218,13 @@ def static_js(path):
 def static_html(path):
     return send_from_directory('templates', path)
 
+@app.route("/api/v1/benchmark/<uuid:uuid>.perflog")
+def get_raw_data(uuid):
+    try:
+        filename = str(uuid) + ".perflog"
+        return send_from_directory('logs', filename)
+    except Exception as e:
+        return Response(status=404)
 
 if __name__ == "__main__":
     create_tables()
