@@ -168,16 +168,21 @@ def rest_single_session_endpoint(session_uuid):
         script = run_benchmark(request.get_json(), benchmark.uuid)
         return script
 
-@app.route("/api/v1/benchmark/<uuid:benchmark_uuid>", methods=['GET', 'POST'])
-def rest_get_benchmark_script(benchmark_uuid):
-    p = "logs/" + str(benchmark_uuid) + ".perflog"
+@app.route("/api/v1/benchmark/<uuid:benchmark_uuid>.<out_format>", methods=['GET', 'POST'])
+def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
+    filename = str(benchmark_uuid) + ".perflog"
 
-    if os.path.isfile(p):
-        print("yes")
+    SUPPORTED_FORMATS = ['js', 'perflog', 'html']
+    TEMPLATE = """
+    <html>
+    <body> <div class="bk-root">{} </div></body>
+    </html>
+    """
 
+    if os.path.isfile("logs/" + filename) and out_format in SUPPORTED_FORMATS:
         raw_output = None
 
-        with open(p) as f:
+        with open("logs/" + filename) as f:
             raw_output = f.read()
 
         parsed_output = parse_perf_stat_output(raw_output)
@@ -189,7 +194,13 @@ def rest_get_benchmark_script(benchmark_uuid):
         doc.add_root(p)
         script = autoload_server(model=p, session_id=session.id)
 
-        return Response(script)
+        if out_format == "js":
+            return Response(script)
+        elif out_format == "perflog":
+            send_from_directory("logs", filename)
+        elif out_format == "html":
+            out = TEMPLATE.format(script)
+            return Response(out)
     else:
         return Response("err", status=400)
 

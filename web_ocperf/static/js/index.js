@@ -62,7 +62,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
         }
 
         function loadOldPlot(uuid) {
-            var url = "/api/v1/benchmark/" + uuid;
+            var url = "/api/v1/benchmark/" + uuid + ".js";
 
             $http.get(url).then(fetchPlot);
         }
