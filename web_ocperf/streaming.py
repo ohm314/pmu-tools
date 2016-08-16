@@ -19,7 +19,7 @@ def update(line, source):
     try:
         event = s[3]
     except:
-        print "Problem with event name: " + s[3]
+        print "Problem with event name: " + s[2]
 
     try:
         value = int(s[1])
@@ -36,7 +36,7 @@ def session_task(session):
     session.loop_until_closed()
     print("closed!")
 
-def blocking_task(tool, doc, workload, events, interval, source):
+def blocking_task(tool, doc, workload, events, interval, source, **kwargs):
     # dirty fix for py2 incompatibility between @wraps and partial from functools
     # this should be just: from functools import partial
     # more info: http://bit.ly/29xoM9p

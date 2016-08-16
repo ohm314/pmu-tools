@@ -12,7 +12,7 @@ def plot_parsed_ocperf_output(parsed_output=None, source=None):
         raise Exception("Must provide at least one data source!")
 
 
-    p = figure(toolbar_sticky=False)
+    p = figure(toolbar_sticky=False, responsive=True)
 
     if parsed_output:
         color_idx = 0

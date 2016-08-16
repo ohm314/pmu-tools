@@ -64,24 +64,30 @@ def async_stdout_handler(cmd, callback):
             break;
 
 # TODO use pandas
-def parse_output(raw_output):
+def parse_perf_stat_output(raw_output):
     TIMESTAMP = 0
     VALUE = 1
-    EVENT_TYPE = 3
+
+    # TODO: set this to 3
+    # EVENT_TYPE = 3
+    EVENT_TYPE = 2
 
     output = {}
 
     for line in raw_output.split('\n')[:-1]:
         splitted = line.split(',')
 
-        timestamp = float(splitted[TIMESTAMP])
-        value = int(splitted[VALUE])
-        ev_type = splitted[EVENT_TYPE]
+        try:
+            timestamp = float(splitted[TIMESTAMP])
+            value = int(splitted[VALUE])
+            ev_type = splitted[EVENT_TYPE]
 
-        if ev_type not in output.keys():
-            output[ev_type] = []
+            if ev_type not in output.keys():
+                output[ev_type] = []
 
-        output[ev_type].append( [timestamp, value] )
+            output[ev_type].append( [timestamp, value] )
+        except:
+            print(line)
 
     return output
 
@@ -89,12 +95,17 @@ def parse_perf_record_output(raw_output):
     output = {}
 
     for line in raw_output.split('\n')[:-1]:
-        line = re.sub(r"\s+", " ", line)
-        cols = line.strip(' ').split(' ')
+        # line = re.sub(r"\s+", " ", line)
+        # cols = line.strip(' ').split(' ')
 
-        timestamp = float(cols[2].strip(':'))
-        value = int(cols[3])
-        event_name = cols[4].strip(':')
+        # timestamp = float(cols[2].strip(':'))
+        # value = int(cols[3])
+        # event_name = cols[4].strip(':')
+
+        split = line.split(',')
+        timestamp = float(split[0])
+        value = int(split[1])
+        event_name = split[2]
 
         if event_name not in output.keys():
             output[event_name] = []
@@ -187,7 +198,7 @@ def get_combined_emap():
 def serialize_emap(emap):
     return json.dumps(emap)
 
-def run_ocperf(tool, workload, events, interval, doc=None, source=None):
+def run_ocperf(tool, workload, events, interval, doc=None, source=None, **kwargs):
     """
     workload - command to profile represented as list of strings like .split(' ')
     events - list of symbolic names of events to count
@@ -202,7 +213,11 @@ def run_ocperf(tool, workload, events, interval, doc=None, source=None):
 
     if tool == "stat":
         raw_perf_output = ocp.get_perf_output(perf_cmd)
-        parsed_perf_output = parse_output(raw_perf_output)
+        parsed_perf_output = parse_perf_stat_output(raw_perf_output)
+
+        if "uuid" in kwargs:
+            with open("logs/" + str(kwargs['uuid']) + ".perflog", "w+") as f:
+                f.write(raw_perf_output)
 
     elif tool == "record":
         raw_perf_output = ocp.get_perf_output(perf_cmd)

@@ -18,32 +18,57 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
                 templateUrl: '/templates/homepage.html',
                 controller: 'homepageCtrl'
             }).
+            // when('/session/:uuid', {
+            //     templateUrl: '/templates/session.html',
+            //     controller: 'sessionCtrl'
+            // }).
             when('/session/:uuid', {
-                templateUrl: '/templates/session.html',
-                controller: 'sessionCtrl'
-            }).
-            when('/benchmark/:uuid', {
                 templateUrl: '/templates/benchmark.html',
                 controller: 'benchmarkCtrl'
             }).
-            when('/session/:uuid/new_benchmark', {
-                templateUrl: 'templates/benchmark.html',
-                controller: 'benchmarkCtrl'
-            }).
+            // when('/session/:uuid/new_benchmark', {
+            //     templateUrl: 'templates/benchmark.html',
+            //     controller: 'benchmarkCtrl'
+            // }).
             otherwise('/');
     }).
-    controller('benchmarkCtrl', function($scope, $http, ocperf_rest, $routeParams) {
-        $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
-        $scope.events = ["arith.mul"];
+    controller('benchmarkCtrl', function($scope, $http, ocperf_rest, $routeParams, $location) {
+        // $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
+        $scope.workload = "/tmp/workload.py";
+        $scope.events = ["instructions"];
         $scope.interval = 100;
         $scope.search_term = "";
         $scope.streaming = true;
         $scope.tool = "stat";
 
+        function clearPlot() {
+            console.log("clearing the plot area");
+            $("#plot_autoload_script").html("");
+        }
+
         function fetchPlot(response) {
+            clearPlot();
+
             var s_tag = response.data;
             $("#plot_autoload_script").append($(s_tag));
         }
+
+        function loadBenchmarks(response) {
+            var url = "/api/v1/session/" + $routeParams.uuid;
+
+            $http.get(url).then(function(response) {
+                $scope.benchmarks_list = response.data;
+            });
+        }
+
+        function loadOldPlot(uuid) {
+            var url = "/api/v1/benchmark/" + uuid;
+
+            $http.get(url).then(fetchPlot);
+        }
+
+        $scope.clearPlot = clearPlot;
+        $scope.loadOldPlot = loadOldPlot;
 
         $scope.run = function() {
             var data = {
@@ -54,18 +79,23 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
                 streaming: $scope.streaming
             };
 
-            // $http.post("/api/v1/run", data=data).then(fetchPlot);
-            console.log($routeParams.uuid);
             var url = "/api/v1/session/" + $routeParams.uuid;
-            $http.post(url, data).then(function(response) {
-                var benchmark_uuid = response.data.uuid;
-                $location.path("/benchmark/" + benchmark_uuid);
-            });
+            $http.post(url, data=data).then(fetchPlot).then(loadBenchmarks);
+
+            // console.log($routeParams.uuid);
+            // var url = "/api/v1/session/" + $routeParams.uuid;
+
+            // $http.post(url, data).then(function(response) {
+            //     var benchmark_uuid = response.data.uuid;
+            //     // $location.path("/benchmark/" + benchmark_uuid);
+            //     loadBenchmarks();
+            // });
         };
 
         ocperf_rest.get_emap().then(function(emap) {
             $scope.emap = emap;
         });
+        loadBenchmarks();
     }).
     controller('homepageCtrl', function($scope, $http) {
         function fetch_sessions() {
