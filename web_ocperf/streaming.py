@@ -58,8 +58,11 @@ def blocking_task(tool, doc, workload, events, interval, source, **kwargs):
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     pipe = ocp.get_perf_output_pipe(perf_cmd)
 
+    log = ""
+
     while True:
         out = pipe.stderr.readline()
+        log += out
 
         if out == '':
             break
@@ -68,3 +71,8 @@ def blocking_task(tool, doc, workload, events, interval, source, **kwargs):
             doc.add_next_tick_callback(partial(update, line=out, source=source))
 
     print("long running thread is dead")
+
+    # it's safe to store this benchmark
+    log_output_path = "logs/" + str(kwargs['uuid']) + ".perflog"
+    with open(log_output_path, "w") as f:
+        f.write(log)
