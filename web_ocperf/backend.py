@@ -32,53 +32,6 @@ from plot_utils import plot_parsed_ocperf_output
 from ocperf_utils import *
 from streaming import *
 
-# util
-def run_benchmark(d, uuid=None):
-    doc = curdoc()
-    session = push_session(doc)
-    p = None
-
-    # d = request.get_json()
-    workload = d['workload'].split(' ')
-    events = d['events']
-    interval = d['interval']
-    streaming = d['streaming']
-    tool = d['tool']
-
-    kwargs = {
-        "tool": tool,
-        "doc": doc,
-        "workload": workload,
-        "events": events,
-        "interval": interval,
-        "source": source,
-        "uuid": uuid,
-    }
-
-    if tool == "record":
-        parsed_output = run_ocperf(**kwargs)
-        p = plot_parsed_ocperf_output(parsed_output=parsed_output)
-
-    elif tool == "stat":
-        if not streaming:
-            parsed_output = run_ocperf(**kwargs)
-            p = plot_parsed_ocperf_output(parsed_output=parsed_output)
-
-        elif streaming:
-            thread = Thread(target=blocking_task, kwargs=kwargs)
-            session_thread = Thread(target=session_task,
-                                    kwargs={"session":session})
-
-            thread.start()
-            session_thread.start()
-
-            p = plot_parsed_ocperf_output(source=source)
-
-    if p:
-        doc.add_root(p)
-
-    script = autoload_server(model=p, session_id=session.id, url="http://128.141.246.76:5006/")
-    return script
 
 # globals
 DATABASE = './web_ocperf.sqlt'
@@ -133,6 +86,55 @@ class BenchmarkSchema(Schema):
     session = fields.Nested(SessionSchema, only=['uuid'])
     date_created = fields.DateTime()
     uuid = fields.UUID()
+
+# util
+def run_benchmark(d, uuid=None):
+    doc = curdoc()
+    session = push_session(doc)
+    p = None
+
+    # d = request.get_json()
+    workload = d['workload'].split(' ')
+    events = d['events']
+    interval = d['interval']
+    streaming = d['streaming']
+    tool = d['tool']
+
+    source = ColumnDataSource(data=dict(x=[0], y=[0]))
+    kwargs = {
+        "tool": tool,
+        "doc": doc,
+        "workload": workload,
+        "events": events,
+        "interval": interval,
+        "source": source,
+        "uuid": uuid,
+    }
+
+    if tool == "record":
+        parsed_output = run_ocperf(**kwargs)
+        p = plot_parsed_ocperf_output(parsed_output=parsed_output)
+
+    elif tool == "stat":
+        if not streaming:
+            parsed_output = run_ocperf(**kwargs)
+            p = plot_parsed_ocperf_output(parsed_output=parsed_output)
+
+        elif streaming:
+            thread = Thread(target=blocking_task, kwargs=kwargs)
+            session_thread = Thread(target=session_task,
+                                    kwargs={"session":session})
+
+            thread.start()
+            session_thread.start()
+
+            p = plot_parsed_ocperf_output(source=source)
+
+    if p:
+        doc.add_root(p)
+
+    script = autoload_server(model=p, session_id=session.id)
+    return script
 
 @app.route("/api/v1/session/", methods=['GET', 'POST'])
 def rest_sessions_endpoint():

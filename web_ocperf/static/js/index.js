@@ -33,8 +33,8 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
             otherwise('/');
     }).
     controller('benchmarkCtrl', function($scope, $http, ocperf_rest, $routeParams, $location) {
-        // $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
-        $scope.workload = "/tmp/workload.py";
+        $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
+        // $scope.workload = "/tmp/workload.py";
         $scope.events = ["instructions"];
         $scope.interval = 100;
         $scope.search_term = "";
