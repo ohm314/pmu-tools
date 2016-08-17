@@ -858,59 +858,24 @@ def perf_cmd(cmd):
     else:
         sys.exit(subprocess.call(cmd, stdout=None))
 
-def get_perf_output_pipe(cmd):
-    if len(cmd) >= 2 and cmd[1] == "list":
-        raise Exception("this is only used for stat with interval")
-
-    elif len(cmd) >= 2 and (cmd[1] == "report" or cmd[1] == "stat"):
-        direct = version.has_name
-        if not direct:
-            for w in cmd:
-                if w == "--tui":
-                    direct = True
-                    break
-        # if direct:
-        pipe = subprocess.Popen(cmd,
-                                stdout=open(os.devnull),
-                                stderr=subprocess.PIPE, universal_newlines=True)
-
-        latego.cleanup()
-        return pipe
-    else:
-        sys.exit(subprocess.call(cmd))
-
 def replace_raw_names_in_line(line):
     line = re.sub("[rR]aw 0x([0-9a-f]{4,})", raw, line)
     line = re.sub("r([0-9a-f]{4,})", raw, line)
     line = re.sub("(cpu/.*?/)", lambda e: emap.getperf(e.group(1)), line)
     return line
 
+def get_perf_output_pipe(cmd):
+    pipe = subprocess.Popen(cmd,
+                            stdout=open(os.devnull),
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True, shell=True)
+    return pipe
 
 def get_perf_output(cmd):
-    if len(cmd) >= 2 and cmd[1] == "list":
-        pager, proc = get_pager()
-        try:
-            l = subprocess.Popen(cmd, stdout=pager)
-            l.wait()
-            print >>pager
-            emap.dumpevents(pager, proc is not None)
-            if proc:
-                pager.close()
-                proc.wait()
-        except IOError:
-            pass
-    elif len(cmd) >= 2 and (cmd[1] == "record" or cmd[1] == "stat"):
-        direct = version.has_name
-        if not direct:
-            for w in cmd:
-                if w == "--tui":
-                    direct = True
-                    break
-        pipe = subprocess.Popen(cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        (out, err) = pipe.communicate()
-        return err
+    pipe = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, shell=True)
+    (out, err) = pipe.communicate()
+    return err
 
 if __name__ == '__main__':
     for j in sys.argv:

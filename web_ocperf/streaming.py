@@ -56,6 +56,14 @@ def blocking_task(tool, doc, workload, events, interval, source, **kwargs):
     ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events, interval=interval)
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
+    perf_cmd = ' '.join(perf_cmd)
+
+
+    if 'env' in kwargs:
+        perf_cmd = kwargs['env'] + " " + perf_cmd
+
+    print("FINAL COMMAND: " + perf_cmd)
+
     pipe = ocp.get_perf_output_pipe(perf_cmd)
 
     log = ""

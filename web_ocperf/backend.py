@@ -99,6 +99,7 @@ def run_benchmark(d, uuid=None):
     interval = d['interval']
     streaming = d['streaming']
     tool = d['tool']
+    env = d['env']
 
     source = ColumnDataSource(data=dict(x=[0], y=[0]))
     kwargs = {
@@ -109,6 +110,7 @@ def run_benchmark(d, uuid=None):
         "interval": interval,
         "source": source,
         "uuid": uuid,
+        "env": str(env),
     }
 
     if tool == "record":
@@ -117,6 +119,8 @@ def run_benchmark(d, uuid=None):
 
     elif tool == "stat":
         if not streaming:
+            print("here")
+            print(source)
             parsed_output = run_ocperf(**kwargs)
             p = plot_parsed_ocperf_output(parsed_output=parsed_output)
 

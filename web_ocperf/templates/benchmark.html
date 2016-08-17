@@ -2,10 +2,23 @@
 
     <!-- upper workload input -->
     <div class="row">
-        <div class="col-md-12">
-            <label for="workload">Workload</label>
-            <input ng-model="workload" type="text" id="workload" class="form-control"> <br/>
-        </div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <label class="control-label col-md-2" for="workload">Workload</label>
+
+                <div class="col-md-10">
+                    <input ng-model="workload" type="text" id="workload" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-md-2" for="env">Environment Variables</label>
+
+                <div class="col-md-10">
+                    <input ng-model="env" type="text" id="env" class="form-control"> <br/>
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- row for both left and right side, the main container actually -->

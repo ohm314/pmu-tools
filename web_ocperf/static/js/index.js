@@ -40,6 +40,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
         $scope.search_term = "";
         $scope.streaming = true;
         $scope.tool = "stat";
+        $scope.env = "";
 
         function clearPlot() {
             console.log("clearing the plot area");
@@ -76,7 +77,8 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
                 workload: $scope.workload,
                 events: $scope.events,
                 interval: $scope.interval,
-                streaming: $scope.streaming
+                streaming: $scope.streaming,
+                env: $scope.env
             };
 
             var url = "/api/v1/session/" + $routeParams.uuid;
