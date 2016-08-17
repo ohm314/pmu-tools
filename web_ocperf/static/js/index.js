@@ -45,6 +45,9 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
         function clearPlot() {
             console.log("clearing the plot area");
             $("#plot_autoload_script").html("");
+            $("body>link").each(function() {
+                this.remove();
+            });
         }
 
         function fetchPlot(response) {
