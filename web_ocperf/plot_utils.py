@@ -31,17 +31,3 @@ def plot_parsed_ocperf_output(parsed_output=None, source=None):
         l = p.line(x='x', y='y', source=source)
 
     return p
-
-def store_plot_at(plt, dst):
-    """
-    plt - plot (which)
-    dst - directory (where)
-    """
-    script, div = components(plt, wrap_script=False)
-    print("storing plot")
-
-    with file(path.join(dst, "plot.html"), "w") as f:
-        f.write(div)
-
-    with file(path.join(dst, "script.js"), "w") as f:
-        f.write(script)
