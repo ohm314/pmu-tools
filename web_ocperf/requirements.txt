@@ -1,4 +1,5 @@
+flask
 marshmallow
-peeweee
+peewee
 bokeh
 pandas
