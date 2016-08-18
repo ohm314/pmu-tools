@@ -18,6 +18,7 @@ from flask import (
     send_from_directory,
     g,
     jsonify,
+    abort,
 )
 
 # bokeh related imports
@@ -35,6 +36,7 @@ from streaming import *
 
 # globals
 DATABASE = './web_ocperf.sqlt'
+IP_WHITELIST = ["localhost", "127.0.0.1"]
 
 app = Flask("ocperf server", static_url_path='')
 app.config.from_object(__name__)
@@ -44,12 +46,18 @@ db = pw.SqliteDatabase(DATABASE)
 #--------- HELPERS ------------
 @app.before_request
 def before_request():
-    g.db = db
-    g.db.connect()
+    if request.remote_addr not in IP_WHITELIST:
+        print(request.remote_addr)
+        abort(403)
+    else:
+        g.db = db
+        g.db.connect()
 
 @app.after_request
 def after_request(response):
-    g.db.close()
+    if response.status_code < 400:
+        g.db.close()
+
     return response
 
 #--------- MODELS -------------
