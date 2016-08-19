@@ -89,19 +89,6 @@ def parse_perf_record_output(raw_output):
 
     return df
 
-def print_parsed(parsed_output):
-    print("="*RULE_LEN)
-
-    for ev_type in sorted(parsed_output.keys()):
-        print(ev_type)
-        for sample in parsed_output[ev_type]:
-            print(sample[0], sample[1])
-
-    print("="*RULE_LEN)
-
-def serialize_results(parsed_output):
-    return json.dumps(parsed_output)
-
 def get_ocperf_emap():
     emap = ocp.find_emap()
 
