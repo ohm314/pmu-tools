@@ -127,8 +127,6 @@ def run_benchmark(d, uuid=None):
 
     elif tool == "stat":
         if not streaming:
-            print("here")
-            print(source)
             parsed_output = run_ocperf(**kwargs)
             p = plot_parsed_ocperf_output(parsed_output=parsed_output)
 

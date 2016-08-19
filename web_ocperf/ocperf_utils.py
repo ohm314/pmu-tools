@@ -4,7 +4,8 @@ import json
 import sys
 import subprocess
 import re
-
+import pandas as pd
+from StringIO import StringIO
 
 def build_ocperf_cmd(tool, workload, events_list=None, interval=None):
     cmd = None
@@ -64,31 +65,15 @@ def async_stdout_handler(cmd, callback):
         if output == '' and p.poll() is not None:
             break;
 
-# TODO use pandas
 def parse_perf_stat_output(raw_output):
-    TIMESTAMP = 0
-    VALUE = 1
+    COL_NAMES = ['timestamp', 'value', 'null', 'event_name', 'raw_value', 'mux']
 
-    # TODO: set this to 3
-    # EVENT_TYPE = 3
-    EVENT_TYPE = 2
+    df = pd.read_csv(StringIO(raw_output), names=COL_NAMES)
 
     output = {}
-
-    for line in raw_output.split('\n')[:-1]:
-        splitted = line.split(',')
-
-        try:
-            timestamp = float(splitted[TIMESTAMP])
-            value = int(splitted[VALUE])
-            ev_type = splitted[EVENT_TYPE]
-
-            if ev_type not in output.keys():
-                output[ev_type] = []
-
-            output[ev_type].append( [timestamp, value] )
-        except:
-            print(line)
+    for event in df.event_name.unique():
+        d = df[df.event_name == event][['timestamp', 'value']]
+        output[event] = d.as_matrix()
 
     return output
 
@@ -96,22 +81,23 @@ def parse_perf_record_output(raw_output):
     output = {}
 
     for line in raw_output.split('\n')[:-1]:
-        # line = re.sub(r"\s+", " ", line)
-        # cols = line.strip(' ').split(' ')
+        line = re.sub(r"\s+", " ", line)
+        cols = line.strip(' ').split(' ')
 
-        # timestamp = float(cols[2].strip(':'))
-        # value = int(cols[3])
-        # event_name = cols[4].strip(':')
+        timestamp = float(cols[2].strip(':'))
+        value = int(cols[3])
+        event_name = cols[4].strip(':')
+        symbol_name = cols[:-1]
 
-        split = line.split(',')
-        timestamp = float(split[0])
-        value = int(split[1])
-        event_name = split[2]
+        # split = line.split(',')
+        # timestamp = float(split[0])
+        # value = int(split[1])
+        # event_name = split[2]
 
         if event_name not in output.keys():
             output[event_name] = []
 
-        output[event_name].append( [timestamp, value] )
+        output[event_name].append( [timestamp, value, symbol_name] )
 
     return output
 
@@ -166,7 +152,6 @@ def parse_raw_perf_list():
     return events_list
 
 def get_perf_emap():
-    print("calling perf emap")
     import subprocess
     args = ["perf", "list", "--raw-dump"]
     l = []
@@ -213,22 +198,19 @@ def run_ocperf(tool, workload, events, interval, doc=None, source=None, env=None
     if env:
         perf_cmd = str(env) + " " + perf_cmd
 
-
-    raw_perf_output = None
+    # raw_perf_output = None
+    raw_perf_output = ocp.get_perf_output(perf_cmd)
     parsed_perf_output = ""
 
-    print("Final command: " + perf_cmd)
-
     if tool == "stat":
-        raw_perf_output = ocp.get_perf_output(perf_cmd)
+        # raw_perf_output = ocp.get_perf_output(perf_cmd)
         parsed_perf_output = parse_perf_stat_output(raw_perf_output)
 
-        if "uuid" in kwargs:
-            with open("logs/" + str(kwargs['uuid']) + ".perflog", "w+") as f:
-                f.write(raw_perf_output)
+        with open("logs/" + str(kwargs['uuid']) + ".perflog", "w+") as f:
+            f.write(raw_perf_output)
 
     elif tool == "record":
-        raw_perf_output = ocp.get_perf_output(perf_cmd)
+        # raw_perf_output = ocp.get_perf_output(perf_cmd)
 
         p = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE)
         (out, err) = p.communicate()
