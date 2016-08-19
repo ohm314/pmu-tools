@@ -33,11 +33,10 @@ from plot_utils import plot_parsed_ocperf_output
 from ocperf_utils import *
 from streaming import *
 
+from defconfig import *
+from config import *
 
 # globals
-DATABASE = './web_ocperf.sqlt'
-IP_WHITELIST = ["localhost", "127.0.0.1"]
-
 app = Flask("ocperf server", static_url_path='')
 app.config.from_object(__name__)
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
