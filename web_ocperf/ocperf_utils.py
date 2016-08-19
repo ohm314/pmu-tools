@@ -185,20 +185,16 @@ def run_ocperf(tool, workload, events, interval, doc=None, source=None, env=None
     if env:
         perf_cmd = str(env) + " " + perf_cmd
 
-    # raw_perf_output = None
     raw_perf_output = ocp.get_perf_output(perf_cmd)
-    parsed_perf_output = ""
+    parsed_perf_output = None
 
     if tool == "stat":
-        # raw_perf_output = ocp.get_perf_output(perf_cmd)
-        parsed_perf_output = parse_perf_stat_output(raw_perf_output)
-
         with open("logs/" + str(kwargs['uuid']) + ".perflog", "w+") as f:
             f.write(raw_perf_output)
 
-    elif tool == "record":
-        # raw_perf_output = ocp.get_perf_output(perf_cmd)
+        parsed_perf_output = parse_perf_stat_output(raw_perf_output)
 
+    elif tool == "record":
         p = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE)
         (out, err) = p.communicate()
         parsed_perf_output = parse_perf_record_output(out)
