@@ -20,7 +20,7 @@ def build_ocperf_cmd(tool, workload, events_list=None, interval=None):
             cmd += ["-I", str(interval)]
 
     elif tool == "record":
-        cmd = ["perf", "record", "-o", "_perf.data"]
+        cmd = ["perf", "record", "-o", "perf.data"]
 
         if events_list:
             cmd += ["-e", ",".join(events_list)]
@@ -77,27 +77,27 @@ def parse_perf_stat_output(raw_output):
 
     return output
 
+
 def parse_perf_record_output(raw_output):
+
+    COL_NAMES = [
+        'process',
+        'PID',
+        'timestamp',
+        'value',
+        'event_name',
+        'location',
+        'null',
+        'symbol',
+    ]
+
+    df = pd.read_csv(StringIO(raw_output), names=COL_NAMES,
+                     sep=':?\s+', engine='python')
+
     output = {}
-
-    for line in raw_output.split('\n')[:-1]:
-        line = re.sub(r"\s+", " ", line)
-        cols = line.strip(' ').split(' ')
-
-        timestamp = float(cols[2].strip(':'))
-        value = int(cols[3])
-        event_name = cols[4].strip(':')
-        symbol_name = cols[:-1]
-
-        # split = line.split(',')
-        # timestamp = float(split[0])
-        # value = int(split[1])
-        # event_name = split[2]
-
-        if event_name not in output.keys():
-            output[event_name] = []
-
-        output[event_name].append( [timestamp, value, symbol_name] )
+    for event in df.event_name.unique():
+        d = df[df.event_name == event][['timestamp', 'value']]
+        output[event] = d.as_matrix()
 
     return output
 
