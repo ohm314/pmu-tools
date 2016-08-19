@@ -70,16 +70,9 @@ def parse_perf_stat_output(raw_output):
 
     df = pd.read_csv(StringIO(raw_output), names=COL_NAMES)
 
-    output = {}
-    for event in df.event_name.unique():
-        d = df[df.event_name == event][['timestamp', 'value']]
-        output[event] = d.as_matrix()
-
-    return output
-
+    return df
 
 def parse_perf_record_output(raw_output):
-
     COL_NAMES = [
         'process',
         'PID',
@@ -94,12 +87,7 @@ def parse_perf_record_output(raw_output):
     df = pd.read_csv(StringIO(raw_output), names=COL_NAMES,
                      sep=':?\s+', engine='python')
 
-    output = {}
-    for event in df.event_name.unique():
-        d = df[df.event_name == event][['timestamp', 'value']]
-        output[event] = d.as_matrix()
-
-    return output
+    return df
 
 def print_parsed(parsed_output):
     print("="*RULE_LEN)
@@ -110,7 +98,6 @@ def print_parsed(parsed_output):
             print(sample[0], sample[1])
 
     print("="*RULE_LEN)
-
 
 def serialize_results(parsed_output):
     return json.dumps(parsed_output)

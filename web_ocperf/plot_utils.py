@@ -5,26 +5,23 @@ from bokeh.palettes import inferno
 from os import path
 
 def plot_parsed_ocperf_output(parsed_output=None, source=None):
-    if parsed_output and source:
+    if parsed_output is not None and source is not None:
         raise Exception("Can't do streaming and static plot at the same time")
 
-    if not parsed_output and not source:
+    if parsed_output is None and source is None:
         raise Exception("Must provide at least one data source!")
-
 
     p = figure(toolbar_sticky=False, sizing_mode="stretch_both")
 
-    if parsed_output:
+    if parsed_output is not None:
         color_idx = 0
         palette = inferno(len(parsed_output.keys()))
 
-        for k in parsed_output.keys():
-            samples = parsed_output[k]
+        for event in parsed_output.event_name.unique():
+            d = parsed_output[ parsed_output.event_name == event ]
 
-            x = [sample[0] for sample in samples]
-            y = [sample[1] for sample in samples]
-
-            p.line(x, y, color=palette[color_idx], legend=k)
+            p.line(d['timestamp'], d['value'],
+                   color=palette[color_idx], legend=event)
 
             color_idx += 1
     else:
