@@ -7,7 +7,7 @@ import re
 import pandas as pd
 from StringIO import StringIO
 
-def build_ocperf_cmd(tool, workload, events_list=None, interval=None):
+def build_ocperf_cmd(tool, workload, events_list=None, interval=None, **kwargs):
     cmd = None
 
     if tool == "stat":
@@ -20,7 +20,9 @@ def build_ocperf_cmd(tool, workload, events_list=None, interval=None):
             cmd += ["-I", str(interval)]
 
     elif tool == "record":
-        cmd = ["perf", "record", "-o", "perf.data"]
+        filename = "logs/" + str(kwargs['uuid']) + ".perf.data"
+        cmd = ["perf", "record", "-o", filename]
+        print(cmd)
 
         if events_list:
             cmd += ["-e", ",".join(events_list)]
@@ -147,6 +149,11 @@ def get_perf_emap():
 
     return l
 
+def read_perfdata(filename):
+    p = subprocess.Popen(["perf", "script", "-i", filename], stdout=subprocess.PIPE)
+    (out, err) = p.communicate()
+    return out
+
 def get_combined_emap():
     ocperf_emap = get_ocperf_emap()
     perf_emap = get_perf_emap()
@@ -164,7 +171,7 @@ def run_ocperf(tool, workload, events, interval, doc=None, source=None, env=None
     events - list of symbolic names of events to count
     interval - sampling interval
     """
-    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events, interval=interval)
+    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events, interval=interval, **kwargs)
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     perf_cmd = " ".join(perf_cmd)
@@ -175,15 +182,17 @@ def run_ocperf(tool, workload, events, interval, doc=None, source=None, env=None
     raw_perf_output = ocp.get_perf_output(perf_cmd)
     parsed_perf_output = None
 
+    uuid = str(kwargs['uuid'])
+
     if tool == "stat":
-        with open("logs/" + str(kwargs['uuid']) + ".perflog", "w+") as f:
+        with open("logs/" + uuid + ".perflog", "w+") as f:
             f.write(raw_perf_output)
 
         parsed_perf_output = parse_perf_stat_output(raw_perf_output)
 
     elif tool == "record":
-        p = subprocess.Popen(["perf", "script"], stdout=subprocess.PIPE)
-        (out, err) = p.communicate()
-        parsed_perf_output = parse_perf_record_output(out)
+        filename = "logs/" + uuid + ".perf.data"
+        raw_perf_script_output = read_perfdata(filename)
+        parsed_perf_output = parse_perf_record_output(raw_perf_script_output)
 
     return parsed_perf_output

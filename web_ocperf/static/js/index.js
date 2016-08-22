@@ -33,14 +33,18 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
             otherwise('/');
     }).
     controller('benchmarkCtrl', function($scope, $http, ocperf_rest, $routeParams, $location) {
-        $scope.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
-        // $scope.workload = "/tmp/workload.py";
-        $scope.events = ["instructions"];
-        $scope.interval = 100;
+        var frontend_state = {};
+
+        frontend_state.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
+        // frontend_state.workload = "/tmp/workload.py";
+        frontend_state.events = ["instructions"];
+        frontend_state.interval = 100;
+        frontend_state.streaming = true;
+        frontend_state.tool = "stat";
+        frontend_state.env = "";
+
+        $scope.frontend_state = frontend_state;
         $scope.search_term = "";
-        $scope.streaming = true;
-        $scope.tool = "stat";
-        $scope.env = "";
 
         function clearPlot() {
             console.log("clearing the plot area");
@@ -75,17 +79,8 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
         $scope.loadOldPlot = loadOldPlot;
 
         $scope.run = function() {
-            var data = {
-                tool: $scope.tool,
-                workload: $scope.workload,
-                events: $scope.events,
-                interval: $scope.interval,
-                streaming: $scope.streaming,
-                env: $scope.env
-            };
-
             var url = "/api/v1/session/" + $routeParams.uuid;
-            $http.post(url, data=data).then(fetchPlot).then(loadBenchmarks);
+            $http.post(url, data=frontend_state).then(fetchPlot).then(loadBenchmarks);
 
             // console.log($routeParams.uuid);
             // var url = "/api/v1/session/" + $routeParams.uuid;
