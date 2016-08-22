@@ -179,7 +179,10 @@ def rest_single_session_endpoint(session_uuid):
         result = BenchmarkSchema().dumps(benchmark)
 
         script = run_benchmark(request.get_json(), benchmark.uuid)
-        return script
+        # return script, state
+        ret = jsonify({'script':script, 'state':request.get_json()})
+        print(ret)
+        return ret
 
 @app.route("/api/v1/benchmark/<uuid:benchmark_uuid>.<out_format>", methods=['GET', 'POST'])
 def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
@@ -230,7 +233,8 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
     script = autoload_server(model=p, session_id=session.id)
 
     if out_format == "js":
-        return Response(script)
+        # return Response(script)
+        return jsonify({'script': script, 'state':state})
     elif out_format == "perflog":
         send_from_directory("logs", filename)
     elif out_format == "html":
@@ -239,11 +243,13 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
     else:
         abort()
 
-@app.route("/api/v1/run", methods=['POST'])
-def rest_run_endpoint():
-    d = request.get_json()
-    script = run_benchmark(d)
-    return Response(script)
+# @app.route("/api/v1/run", methods=['POST'])
+# def rest_run_endpoint():
+#     d = request.get_json()
+#     script = run_benchmark(d)
+#     # return Response(script)
+
+#     return jsonify({script:script, state:state})
 
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():

@@ -18,32 +18,23 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
                 templateUrl: '/templates/homepage.html',
                 controller: 'homepageCtrl'
             }).
-            // when('/session/:uuid', {
-            //     templateUrl: '/templates/session.html',
-            //     controller: 'sessionCtrl'
-            // }).
             when('/session/:uuid', {
                 templateUrl: '/templates/benchmark.html',
                 controller: 'benchmarkCtrl'
             }).
-            // when('/session/:uuid/new_benchmark', {
-            //     templateUrl: 'templates/benchmark.html',
-            //     controller: 'benchmarkCtrl'
-            // }).
             otherwise('/');
     }).
     controller('benchmarkCtrl', function($scope, $http, ocperf_rest, $routeParams, $location) {
-        var frontend_state = {};
+        $scope.frontend_state = {};
 
-        frontend_state.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
-        // frontend_state.workload = "/tmp/workload.py";
-        frontend_state.events = ["instructions"];
-        frontend_state.interval = 100;
-        frontend_state.streaming = true;
-        frontend_state.tool = "stat";
-        frontend_state.env = "";
+        $scope.frontend_state.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
+        // $scope.frontend_state.workload = "/tmp/workload.py";
+        $scope.frontend_state.events = ["instructions"];
+        $scope.frontend_state.interval = 100;
+        $scope.frontend_state.streaming = true;
+        $scope.frontend_state.tool = "stat";
+        $scope.frontend_state.env = "";
 
-        $scope.frontend_state = frontend_state;
         $scope.search_term = "";
 
         function clearPlot() {
@@ -57,7 +48,10 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
         function fetchPlot(response) {
             clearPlot();
 
-            var s_tag = response.data;
+            console.log(response.data);
+
+            var s_tag = response.data.script;
+            $scope.frontend_state = response.data.state;
             $("#plot_autoload_script").append($(s_tag));
         }
 
@@ -80,16 +74,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
 
         $scope.run = function() {
             var url = "/api/v1/session/" + $routeParams.uuid;
-            $http.post(url, data=frontend_state).then(fetchPlot).then(loadBenchmarks);
-
-            // console.log($routeParams.uuid);
-            // var url = "/api/v1/session/" + $routeParams.uuid;
-
-            // $http.post(url, data).then(function(response) {
-            //     var benchmark_uuid = response.data.uuid;
-            //     // $location.path("/benchmark/" + benchmark_uuid);
-            //     loadBenchmarks();
-            // });
+            $http.post(url, data=$scope.frontend_state).then(fetchPlot).then(loadBenchmarks);
         };
 
         ocperf_rest.get_emap().then(function(emap) {
@@ -105,15 +90,10 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
         }
 
         $scope.new_session = function(session_title) {
-            // post request
-            // get uuid for the new sessions
-            // redirect user to this new session
-
             $http.post("/api/v1/session/", {session_title: session_title}).
                 then(function(response) {
                     fetch_sessions();
                 });
-
         };
 
         fetch_sessions();
