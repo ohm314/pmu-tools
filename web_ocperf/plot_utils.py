@@ -13,7 +13,7 @@ def plot_parsed_ocperf_output(parsed_output=None, source=None):
     if parsed_output is None and source is None:
         raise Exception("Must provide at least one data source!")
 
-    p = figure(toolbar_sticky=False, sizing_mode="stretch_both")
+    p = figure(toolbar_sticky=False, sizing_mode="scale_width")
 
     hover = HoverTool()
 
@@ -42,4 +42,7 @@ def plot_parsed_ocperf_output(parsed_output=None, source=None):
         l = p.line(x='x', y='y', source=source)
 
     p.add_tools(hover)
+    p.xaxis.axis_label = 'time [s]'
+    p.yaxis.axis_label = 'samples count'
+
     return p

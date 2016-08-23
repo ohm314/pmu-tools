@@ -22,7 +22,6 @@ def build_ocperf_cmd(tool, workload, events_list=None, interval=None, **kwargs):
     elif tool == "record":
         filename = "logs/" + str(kwargs['uuid']) + ".perf.data"
         cmd = ["perf", "record", "-o", filename]
-        print(cmd)
 
         if events_list:
             cmd += ["-e", ",".join(events_list)]
@@ -71,6 +70,7 @@ def parse_perf_stat_output(raw_output):
     COL_NAMES = ['timestamp', 'value', 'null', 'event_name', 'raw_value', 'mux']
 
     df = pd.read_csv(StringIO(raw_output), names=COL_NAMES)
+    df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
     return df
 
@@ -88,6 +88,7 @@ def parse_perf_record_output(raw_output):
 
     df = pd.read_csv(StringIO(raw_output), names=COL_NAMES,
                      sep=':?\s+', engine='python')
+    df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
     return df
 

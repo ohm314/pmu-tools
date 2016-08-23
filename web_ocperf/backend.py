@@ -46,7 +46,6 @@ db = pw.SqliteDatabase(DATABASE)
 @app.before_request
 def before_request():
     if request.remote_addr not in IP_WHITELIST:
-        print(request.remote_addr)
         abort(403)
     else:
         g.db = db
@@ -156,7 +155,6 @@ def rest_sessions_endpoint():
 
     elif request.method == 'POST':
         title = request.get_json()['session_title']
-        print("Create me this session, please: " + title)
 
         s = SessionModel.create(title=title)
         json_s, err = SessionSchema().dumps(s)
@@ -172,7 +170,6 @@ def rest_single_session_endpoint(session_uuid):
 
     elif request.method == 'POST':
         state = json.dumps(request.get_json())
-        print(state)
 
         session = SessionModel.get(SessionModel.uuid==session_uuid)
         benchmark = BenchmarkModel.create(session=session, frontend_state=state)
@@ -181,7 +178,6 @@ def rest_single_session_endpoint(session_uuid):
         script = run_benchmark(request.get_json(), benchmark.uuid)
         # return script, state
         ret = jsonify({'script':script, 'state':request.get_json()})
-        print(ret)
         return ret
 
 @app.route("/api/v1/benchmark/<uuid:benchmark_uuid>.<out_format>", methods=['GET', 'POST'])
@@ -203,7 +199,6 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
 
     if state['tool'] == "record":
         filename = "logs/" + str(benchmark_uuid) + ".perf.data"
-        print(filename)
 
         if os.path.isfile(filename):
             raw_perf_script_output = read_perfdata(filename)
