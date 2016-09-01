@@ -14,9 +14,6 @@
 If you are running the server on a remote machine,
 use ssh to forward ports 5000 and 5006.
 
-You need to create the `logs` directory. It's the directory
-where raw files will be stored.
-
 Metadata will be stored in a SQlite database. SQlite database
 resides in a single file. The default database filename is: `web_ocperf.sqlt`
 This can be changed in the config.py.
@@ -26,6 +23,9 @@ originate from the localhost. This can be changed in the config.py.
 
 To change a value in config, uncoment the value and change it.
 Default are always available in the `defconfig.py` file.
+
+To remove all stored sessions delete the `logs/` directory and the database file.
+They will be regenerated next time web\_ocperf is started.
 
 ## Technical details
 

@@ -42,6 +42,11 @@ app.config.from_object(__name__)
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
 db = pw.SqliteDatabase(DATABASE)
 
+def init():
+    """initialization code"""
+    if not os.path.exists('logs/'):
+        os.makedirs('logs/')
+
 #--------- HELPERS ------------
 @app.before_request
 def before_request():
@@ -274,5 +279,6 @@ def get_raw_data(uuid):
         return Response(status=404)
 
 if __name__ == "__main__":
+    init()
     create_tables()
     app.run(debug=True, host="0.0.0.0")
