@@ -1,47 +1,48 @@
 from bokeh.plotting import figure
 from bokeh.embed import components
 from bokeh.palettes import inferno
+from bokeh.models import HoverTool
+from bokeh.models.sources import ColumnDataSource
 
 from os import path
 
 def plot_parsed_ocperf_output(parsed_output=None, source=None):
-    if parsed_output and source:
+    if parsed_output is not None and source is not None:
         raise Exception("Can't do streaming and static plot at the same time")
 
-    if not parsed_output and not source:
+    if parsed_output is None and source is None:
         raise Exception("Must provide at least one data source!")
 
+    p = figure(toolbar_sticky=False, sizing_mode="scale_width")
 
-    p = figure(toolbar_sticky=False, sizing_mode="stretch_both")
+    hover = HoverTool()
 
-    if parsed_output:
+    if parsed_output is not None:
         color_idx = 0
         palette = inferno(len(parsed_output.keys()))
 
-        for k in parsed_output.keys():
-            samples = parsed_output[k]
+        for event in parsed_output.event_name.unique():
+            d = parsed_output[ parsed_output.event_name == event ]
 
-            x = [sample[0] for sample in samples]
-            y = [sample[1] for sample in samples]
-
-            p.line(x, y, color=palette[color_idx], legend=k)
+            src = ColumnDataSource(data=d)
+            p.line('timestamp', 'value',
+                   source=src, legend=event, color=palette[color_idx])
 
             color_idx += 1
+
+        if 'symbol' in list(parsed_output):
+            hover.tooltips = [
+                ('time', '@timestamp'),
+                ('value', '@value'),
+                ('symbol', '@symbol'),
+                ('location', '#@location'),
+            ]
+
     else:
         l = p.line(x='x', y='y', source=source)
 
+    p.add_tools(hover)
+    p.xaxis.axis_label = 'time [s]'
+    p.yaxis.axis_label = 'samples count'
+
     return p
-
-def store_plot_at(plt, dst):
-    """
-    plt - plot (which)
-    dst - directory (where)
-    """
-    script, div = components(plt, wrap_script=False)
-    print("storing plot")
-
-    with file(path.join(dst, "plot.html"), "w") as f:
-        f.write(div)
-
-    with file(path.join(dst, "script.js"), "w") as f:
-        f.write(script)

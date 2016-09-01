@@ -33,11 +33,10 @@ from plot_utils import plot_parsed_ocperf_output
 from ocperf_utils import *
 from streaming import *
 
+from defconfig import *
+from config import *
 
 # globals
-DATABASE = './web_ocperf.sqlt'
-IP_WHITELIST = ["localhost", "127.0.0.1"]
-
 app = Flask("ocperf server", static_url_path='')
 app.config.from_object(__name__)
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
@@ -47,7 +46,6 @@ db = pw.SqliteDatabase(DATABASE)
 @app.before_request
 def before_request():
     if request.remote_addr not in IP_WHITELIST:
-        print(request.remote_addr)
         abort(403)
     else:
         g.db = db
@@ -75,6 +73,7 @@ class BenchmarkModel(BaseModel):
     session = pw.ForeignKeyField(SessionModel, related_name='benchmarks')
     date_created = pw.DateTimeField(default=datetime.utcnow)
     uuid = pw.UUIDField(default=uuid.uuid4)
+    frontend_state = pw.TextField()
 
 def create_tables():
     db.connect()
@@ -94,6 +93,7 @@ class BenchmarkSchema(Schema):
     session = fields.Nested(SessionSchema, only=['uuid'])
     date_created = fields.DateTime()
     uuid = fields.UUID()
+    frontend_state = fields.String()
 
 # util
 def run_benchmark(d, uuid=None):
@@ -127,8 +127,6 @@ def run_benchmark(d, uuid=None):
 
     elif tool == "stat":
         if not streaming:
-            print("here")
-            print(source)
             parsed_output = run_ocperf(**kwargs)
             p = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
@@ -157,7 +155,6 @@ def rest_sessions_endpoint():
 
     elif request.method == 'POST':
         title = request.get_json()['session_title']
-        print("Create me this session, please: " + title)
 
         s = SessionModel.create(title=title)
         json_s, err = SessionSchema().dumps(s)
@@ -172,55 +169,82 @@ def rest_single_session_endpoint(session_uuid):
         return result.data
 
     elif request.method == 'POST':
-        print(session_uuid)
+        state = json.dumps(request.get_json())
+
         session = SessionModel.get(SessionModel.uuid==session_uuid)
-        benchmark = BenchmarkModel.create(session=session)
+        benchmark = BenchmarkModel.create(session=session, frontend_state=state)
         result = BenchmarkSchema().dumps(benchmark)
 
         script = run_benchmark(request.get_json(), benchmark.uuid)
-        return script
+        # return script, state
+        ret = jsonify({'script':script, 'state':request.get_json()})
+        return ret
 
 @app.route("/api/v1/benchmark/<uuid:benchmark_uuid>.<out_format>", methods=['GET', 'POST'])
 def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
-    filename = str(benchmark_uuid) + ".perflog"
-
-    SUPPORTED_FORMATS = ['js', 'perflog', 'html']
+    SUPPORTED_FORMATS = ['js', 'perflog', 'html', 'data']
     TEMPLATE = """
     <html>
     <body> <div class="bk-root">{} </div></body>
     </html>
     """
+    filename = None
+    raw_output = None
 
-    if os.path.isfile("logs/" + filename) and out_format in SUPPORTED_FORMATS:
-        raw_output = None
+    if out_format not in SUPPORTED_FORMATS:
+        abort()
 
-        with open("logs/" + filename) as f:
-            raw_output = f.read()
+    benchmark = BenchmarkModel.get(BenchmarkModel.uuid == benchmark_uuid)
+    state = json.loads(benchmark.frontend_state)
 
-        parsed_output = parse_perf_stat_output(raw_output)
-        p = plot_parsed_ocperf_output(parsed_output=parsed_output)
+    if state['tool'] == "record":
+        filename = "logs/" + str(benchmark_uuid) + ".perf.data"
 
-        doc = curdoc()
-        session = push_session(doc)
+        if os.path.isfile(filename):
+            raw_perf_script_output = read_perfdata(filename)
+            parsed_output = parse_perf_record_output(raw_perf_script_output)
+        else:
+            abort(404)
 
-        doc.add_root(p)
-        script = autoload_server(model=p, session_id=session.id)
+    elif state['tool'] == 'stat':
+        filename = "logs/" + str(benchmark_uuid) + ".perflog"
 
-        if out_format == "js":
-            return Response(script)
-        elif out_format == "perflog":
-            send_from_directory("logs", filename)
-        elif out_format == "html":
-            out = TEMPLATE.format(script)
-            return Response(out)
+        if os.path.isfile(filename):
+            with open(filename) as f:
+                raw_output = f.read()
+
+            parsed_output = parse_perf_stat_output(raw_output)
+        else:
+            abort(404)
+
+
+    p = plot_parsed_ocperf_output(parsed_output=parsed_output)
+
+
+    doc = curdoc()
+    session = push_session(doc)
+
+    doc.add_root(p)
+    script = autoload_server(model=p, session_id=session.id)
+
+    if out_format == "js":
+        # return Response(script)
+        return jsonify({'script': script, 'state':state})
+    elif out_format == "perflog":
+        send_from_directory("logs", filename)
+    elif out_format == "html":
+        out = TEMPLATE.format(script)
+        return Response(out)
     else:
-        return Response("err", status=400)
+        abort()
 
-@app.route("/api/v1/run", methods=['POST'])
-def rest_run_endpoint():
-    d = request.get_json()
-    script = run_benchmark(d)
-    return Response(script)
+# @app.route("/api/v1/run", methods=['POST'])
+# def rest_run_endpoint():
+#     d = request.get_json()
+#     script = run_benchmark(d)
+#     # return Response(script)
+
+#     return jsonify({script:script, state:state})
 
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():
