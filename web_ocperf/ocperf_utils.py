@@ -98,11 +98,13 @@ def get_ocperf_emap():
     d = []
 
     for k in emap.events.keys():
-        d.append( {"sym":k, "desc":emap.desc[k]} )
+        if not k == '':
+            d.append( {"sym":k, "desc":emap.desc[k]} )
 
     try:
         for k in emap.uncore_events.keys():
-            d.append( {"sym":k, "desc":emap.uncored_events[k].desc} )
+            if not k == '':
+                d.append( {"sym":k, "desc":emap.uncored_events[k].desc} )
     except:
         pass
 
@@ -140,7 +142,7 @@ def get_perf_emap():
     ret = p.poll()
 
     if ret == 0:
-        for event in events_list_str.split(' '):
+        for event in events_list_str.strip().split(' '):
             l.append({"sym": event, "desc": NO_DESC})
     else:
         events_list = parse_raw_perf_list()
