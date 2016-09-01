@@ -14,6 +14,10 @@
 If you are running the server on a remote machine,
 use ssh to forward ports 5000 and 5006.
 
+```bash
+$ ssh -L5000:127.0.0.1:5000 -L5006:127.0.0.1:5006 you@remotehost
+```
+
 Metadata will be stored in a SQlite database. SQlite database
 resides in a single file. The default database filename is: `web_ocperf.sqlt`
 This can be changed in the config.py.
