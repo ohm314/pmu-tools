@@ -4,9 +4,9 @@ PERF_STAT_CSV_HDR = ['timestamp',
     'value',
     'unit',
     'event_name',
-    'raw_value',
+    'run_time',
     'mux',
-    '','','',
+    'var','metric_val','metric_unit',
 ]
 PERF_RECORD_CSV_HDR = [
     'process',

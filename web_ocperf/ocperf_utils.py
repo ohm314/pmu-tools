@@ -70,7 +70,8 @@ def async_stdout_handler(cmd, callback):
             break;
 
 def parse_perf_stat_output(raw_output):
-    df = pd.read_csv(StringIO(raw_output), names=PERF_STAT_CSV_HDR)
+    df = pd.read_csv(StringIO(raw_output), index_col=False, header=None, 
+         names=PERF_STAT_CSV_HDR)
     df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
     return df
