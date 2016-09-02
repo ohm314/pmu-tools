@@ -27,7 +27,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
     controller('benchmarkCtrl', function($scope, $http, ocperf_rest, $routeParams, $location) {
         $scope.frontend_state = {};
 
-        $scope.frontend_state.workload = "/home/nhardi/code/cl_forward/bin/x86_64/Release/clpixel -serial -bin -file /home/nhardi/code/cl_forward/bin/x86_64/Release/test.small.arg";
+        $scope.frontend_state.workload = "";
         // $scope.frontend_state.workload = "/tmp/workload.py";
         $scope.frontend_state.events = ["instructions"];
         $scope.frontend_state.interval = 100;
