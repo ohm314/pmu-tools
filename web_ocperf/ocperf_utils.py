@@ -7,6 +7,9 @@ import re
 import pandas as pd
 from StringIO import StringIO
 
+from defconfig import *
+from config import *
+
 def build_ocperf_cmd(tool, workload, events_list=None, interval=None, **kwargs):
     cmd = None
 
@@ -67,26 +70,13 @@ def async_stdout_handler(cmd, callback):
             break;
 
 def parse_perf_stat_output(raw_output):
-    COL_NAMES = ['timestamp', 'value', 'null', 'event_name', 'raw_value', 'mux']
-
-    df = pd.read_csv(StringIO(raw_output), names=COL_NAMES)
+    df = pd.read_csv(StringIO(raw_output), names=PERF_STAT_CSV_HDR)
     df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
     return df
 
 def parse_perf_record_output(raw_output):
-    COL_NAMES = [
-        'process',
-        'PID',
-        'timestamp',
-        'value',
-        'event_name',
-        'location',
-        'null',
-        'symbol',
-    ]
-
-    df = pd.read_csv(StringIO(raw_output), names=COL_NAMES,
+    df = pd.read_csv(StringIO(raw_output), names=PERF_RECORD_CSV_HDR,
                      sep=':?\s+', engine='python')
     df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
