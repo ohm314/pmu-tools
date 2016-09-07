@@ -1,26 +1,27 @@
+import bokeh
 from bokeh.plotting import figure
-from bokeh.palettes import inferno
 from bokeh.models import HoverTool
 from bokeh.models.sources import ColumnDataSource
 
-def plot_parsed_ocperf_output(parsed_output=None, source=None):
-    if parsed_output is not None and source is not None:
+def plot_parsed_ocperf_output(parsed_output=None, sources=None):
+    if parsed_output is not None and sources is not None:
         raise Exception("Can't do streaming and static plot at the same time")
 
-    if parsed_output is None and source is None:
-        raise Exception("Must provide at least one data source!")
+    if parsed_output is None and sources is None:
+        raise Exception("Must provide at least one data sources!")
 
     p = figure(toolbar_sticky=False, sizing_mode="scale_width")
 
     hover = HoverTool()
 
+    color_idx = 0
+    palette = bokeh.palettes.brewer['Dark2'][8]
+
+    # static plot
     if parsed_output is not None:
-        color_idx = 0
-        palette = inferno(len(parsed_output.keys()))
 
         for event in parsed_output.event_name.unique():
             d = parsed_output[ parsed_output.event_name == event ]
-
             src = ColumnDataSource(data=d)
             p.line('timestamp', 'value',
                    source=src, legend=event, color=palette[color_idx])
@@ -35,8 +36,11 @@ def plot_parsed_ocperf_output(parsed_output=None, source=None):
                 ('location', '#@location'),
             ]
 
-    else:
-        l = p.line(x='x', y='y', source=source)
+    else:  # streaming plot
+        for event, source in sources.iteritems():
+            p.line('timestamp', event,
+                   source=source, legend=event, color=palette[color_idx])
+            color_idx = (color_idx + 1) % 8
 
     p.add_tools(hover)
     p.xaxis.axis_label = 'time [s]'

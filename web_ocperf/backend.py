@@ -113,14 +113,20 @@ def run_benchmark(d, uuid=None):
     tool = d['tool']
     env = d['env']
 
-    source = ColumnDataSource(data=dict(x=[0], y=[0]))
+    sources = {}
+    for event in events:
+        if ocp.version.has_name:
+            event = event.replace('.', '_')
+        sources[event] = ColumnDataSource(
+                               data={'timestamp': [0.0], event: [0]})
+
     kwargs = {
         "tool": tool,
         "doc": doc,
         "workload": workload,
         "events": events,
         "interval": interval,
-        "source": source,
+        "sources": sources,
         "uuid": uuid,
         "env": str(env),
     }
@@ -142,7 +148,7 @@ def run_benchmark(d, uuid=None):
             thread.start()
             session_thread.start()
 
-            p = plot_parsed_ocperf_output(source=source)
+            p = plot_parsed_ocperf_output(sources=sources)
 
     if p:
         doc.add_root(p)

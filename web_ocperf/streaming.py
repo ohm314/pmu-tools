@@ -3,14 +3,13 @@ from ocperf_utils import *
 
 
 @gen.coroutine
-def update(line, source):
+def update(line, sources):
     s = line.split(',')
 
     timestamp = None
     value = None
     event = None
 
-    print("[UPDATE] Source ID: " + str(id(source)))
 
     try:
         timestamp = float(s[0])
@@ -28,16 +27,21 @@ def update(line, source):
         value = 0
         print "problem with value parsing: " + s[1]
 
-    print("doing update")
     print(timestamp, value, event)
-    source.stream(dict(x=[timestamp], y=[value]))
+    try:
+        print("[UPDATE] Source ID: " + str(id(sources[event])))
+        sources[event].stream({'timestamp': [timestamp], event: [value]})
+    except KeyError:
+        print("[ERROR] update of event %s failed. Could not find " % (event) +
+              "suitable ColumnDataSource")
+
 
 def session_task(session):
     print("Spawning background session task")
     session.loop_until_closed()
     print("closed!")
 
-def blocking_task(tool, doc, workload, events, interval, source, **kwargs):
+def blocking_task(tool, doc, workload, events, interval, sources, **kwargs):
     # dirty fix for py2 incompatibility between @wraps and partial from functools
     # this should be just: from functools import partial
     # more info: http://bit.ly/29xoM9p
@@ -75,10 +79,8 @@ def blocking_task(tool, doc, workload, events, interval, source, **kwargs):
         if out == '':
             break
         else:
-            print(out)
-            doc.add_next_tick_callback(partial(update, line=out, source=source))
-
-    print("long running thread is dead")
+            doc.add_next_tick_callback(partial(update, line=out,
+                sources=sources))
 
     # it's safe to store this benchmark
     log_output_path = "logs/" + str(kwargs['uuid']) + ".perflog"
