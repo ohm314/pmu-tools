@@ -1,49 +1,47 @@
+import logging
+import traceback
 from tornado import gen
-from ocperf_utils import *
+import ocperf as ocp
+import ocperf_utils
 
 
 @gen.coroutine
 def update(line, sources):
-    s = line.split(',')
+    fields = line.split(',')
 
     timestamp = None
-    value = None
+    value = 0
     event = None
 
-
+    logging.info(line)
     try:
-        timestamp = float(s[0])
+        timestamp = float(fields[0])
+        event = fields[3]
+        value = int(fields[1])
     except:
-        print "Problem with timestamp: " + s[0]
+        logging.warning('Could not parse line:\n%s' % line)
+        logging.warning(traceback.format_exc())
+        return
 
+    logging.info(timestamp, value, event)
     try:
-        event = s[3]
-    except:
-        print "Problem with event name: " + s[2]
-
-    try:
-        value = int(s[1])
-    except:
-        value = 0
-        print "problem with value parsing: " + s[1]
-
-    print(timestamp, value, event)
-    try:
-        print("[UPDATE] Source ID: " + str(id(sources[event])))
+        logging.info("[UPDATE] Source ID: " + str(id(sources[event])))
         sources[event].stream({'timestamp': [timestamp], event: [value]})
     except KeyError:
-        print("[ERROR] update of event %s failed. Could not find " % (event) +
-              "suitable ColumnDataSource")
+        logging.error("update of event %s failed. Could not find " % (event) +
+                      "suitable ColumnDataSource")
+        return
 
 
 def session_task(session):
-    print("Spawning background session task")
+    logging.info("Spawning background session task")
     session.loop_until_closed()
-    print("closed!")
+    logging.info("closed!")
+
 
 def blocking_task(tool, doc, workload, events, interval, sources, **kwargs):
-    # dirty fix for py2 incompatibility between @wraps and partial from functools
-    # this should be just: from functools import partial
+    # dirty fix for py2 incompatibility between @wraps and partial from
+    # functools this should be just: from functools import partial
     # more info: http://bit.ly/29xoM9p
     def partial(func, *args, **keywords):
         def newfunc(*fargs, **fkeywords):
@@ -55,18 +53,19 @@ def blocking_task(tool, doc, workload, events, interval, sources, **kwargs):
         newfunc.keywords = keywords
         return newfunc
 
-    print("inside streaming thread")
+    logging.info("inside streaming thread")
 
-    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events, interval=interval)
+    ocperf_cmd = ocperf_utils.build_ocperf_cmd(tool, workload,
+                                               events_list=events,
+                                               interval=interval)
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     perf_cmd = ' '.join(perf_cmd)
 
-
     if 'env' in kwargs:
         perf_cmd = kwargs['env'] + " " + perf_cmd
 
-    print("FINAL COMMAND: " + perf_cmd)
+    logging.info("FINAL COMMAND: " + perf_cmd)
 
     pipe = ocp.get_perf_output_pipe(perf_cmd)
 
@@ -80,9 +79,9 @@ def blocking_task(tool, doc, workload, events, interval, sources, **kwargs):
             break
         else:
             doc.add_next_tick_callback(partial(update, line=out,
-                sources=sources))
+                                               sources=sources))
 
     # it's safe to store this benchmark
     log_output_path = "logs/" + str(kwargs['uuid']) + ".perflog"
-    with open(log_output_path, "w") as f:
-        f.write(log)
+    with open(log_output_path, "w") as logfile:
+        logfile.write(log)

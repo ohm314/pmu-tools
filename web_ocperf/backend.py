@@ -21,16 +21,16 @@ from flask import (
 )
 
 # bokeh related imports
+import bokeh.plotting
 from bokeh.client import push_session
 from bokeh.models import ColumnDataSource
-from bokeh.plotting import curdoc, figure
 from bokeh.embed import autoload_server
 
 # utils for web_ocperf
 import ocperf as ocp
 from plot_utils import plot_parsed_ocperf_output
-from ocperf_utils import *
-from streaming import *
+import ocperf_utils
+import streaming
 
 from defconfig import *
 from config import *
@@ -100,25 +100,25 @@ class BenchmarkSchema(Schema):
     frontend_state = fields.String()
 
 # util
-def run_benchmark(d, uuid=None):
-    doc = curdoc()
+def run_benchmark(data, uuid=None):
+    doc = bokeh.plotting.curdoc()
     session = push_session(doc)
-    p = None
+    fig = None
 
     # d = request.get_json()
-    workload = d['workload'].split(' ')
-    events = d['events']
-    interval = d['interval']
-    streaming = d['streaming']
-    tool = d['tool']
-    env = d['env']
+    workload = data['workload'].split(' ')
+    events = data['events']
+    interval = data['interval']
+    do_stream = data['streaming']
+    tool = data['tool']
+    env = data['env']
 
     sources = {}
     for event in events:
         if ocp.version.has_name:
             event = event.replace('.', '_')
-        sources[event] = ColumnDataSource(
-                               data={'timestamp': [0.0], event: [0]})
+        sources[event] = ColumnDataSource(data={'timestamp': [0.0],
+                                                event: [0]})
 
     kwargs = {
         "tool": tool,
@@ -132,29 +132,30 @@ def run_benchmark(d, uuid=None):
     }
 
     if tool == "record":
-        parsed_output = run_ocperf(**kwargs)
-        p = plot_parsed_ocperf_output(parsed_output=parsed_output)
+        parsed_output = ocperf_utils.run_ocperf(**kwargs)
+        fig = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
     elif tool == "stat":
-        if not streaming:
-            parsed_output = run_ocperf(**kwargs)
-            p = plot_parsed_ocperf_output(parsed_output=parsed_output)
+        if not do_stream:
+            parsed_output = ocperf_utils.run_ocperf(**kwargs)
+            fig = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
-        elif streaming:
-            thread = Thread(target=blocking_task, kwargs=kwargs)
-            session_thread = Thread(target=session_task,
-                                    kwargs={"session":session})
+        elif do_stream:
+            thread = Thread(target=streaming.blocking_task, kwargs=kwargs)
+            session_thread = Thread(target=streaming.session_task,
+                                    kwargs={"session": session})
 
             thread.start()
             session_thread.start()
 
-            p = plot_parsed_ocperf_output(sources=sources)
+            fig = plot_parsed_ocperf_output(sources=sources)
 
-    if p:
-        doc.add_root(p)
+    if fig:
+        doc.add_root(fig)
 
-    script = autoload_server(model=p, session_id=session.id)
+    script = autoload_server(model=fig, session_id=session.id)
     return script
+
 
 @app.route("/api/v1/session/", methods=['GET', 'POST'])
 def rest_sessions_endpoint():
@@ -231,7 +232,7 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
     p = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
 
-    doc = curdoc()
+    doc = bokeh.plotting.curdoc()
     session = push_session(doc)
 
     doc.add_root(p)

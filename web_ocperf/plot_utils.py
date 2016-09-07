@@ -3,6 +3,7 @@ from bokeh.plotting import figure
 from bokeh.models import HoverTool
 from bokeh.models.sources import ColumnDataSource
 
+
 def plot_parsed_ocperf_output(parsed_output=None, sources=None):
     if parsed_output is not None and sources is not None:
         raise Exception("Can't do streaming and static plot at the same time")
@@ -10,7 +11,7 @@ def plot_parsed_ocperf_output(parsed_output=None, sources=None):
     if parsed_output is None and sources is None:
         raise Exception("Must provide at least one data sources!")
 
-    p = figure(toolbar_sticky=False, sizing_mode="scale_width")
+    fig = figure(toolbar_sticky=False, sizing_mode="scale_width")
 
     hover = HoverTool()
 
@@ -21,10 +22,10 @@ def plot_parsed_ocperf_output(parsed_output=None, sources=None):
     if parsed_output is not None:
 
         for event in parsed_output.event_name.unique():
-            d = parsed_output[ parsed_output.event_name == event ]
-            src = ColumnDataSource(data=d)
-            p.line('timestamp', 'value',
-                   source=src, legend=event, color=palette[color_idx])
+            data = parsed_output[parsed_output.event_name == event]
+            src = ColumnDataSource(data=data)
+            fig.line('timestamp', 'value',
+                     source=src, legend=event, color=palette[color_idx])
 
             color_idx += 1
 
@@ -38,12 +39,12 @@ def plot_parsed_ocperf_output(parsed_output=None, sources=None):
 
     else:  # streaming plot
         for event, source in sources.iteritems():
-            p.line('timestamp', event,
-                   source=source, legend=event, color=palette[color_idx])
+            fig.line('timestamp', event,
+                     source=source, legend=event, color=palette[color_idx])
             color_idx = (color_idx + 1) % 8
 
-    p.add_tools(hover)
-    p.xaxis.axis_label = 'time [s]'
-    p.yaxis.axis_label = 'samples count'
+    fig.add_tools(hover)
+    fig.xaxis.axis_label = 'time [s]'
+    fig.yaxis.axis_label = 'samples count'
 
-    return p
+    return fig
