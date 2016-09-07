@@ -5,7 +5,6 @@ import uuid
 from datetime import datetime
 import os
 
-from random import random
 import peewee as pw
 # from playhouse.flask_utils import FlaskDB
 from marshmallow import Schema, fields

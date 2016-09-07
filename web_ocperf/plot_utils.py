@@ -1,10 +1,7 @@
 from bokeh.plotting import figure
-from bokeh.embed import components
 from bokeh.palettes import inferno
 from bokeh.models import HoverTool
 from bokeh.models.sources import ColumnDataSource
-
-from os import path
 
 def plot_parsed_ocperf_output(parsed_output=None, source=None):
     if parsed_output is not None and source is not None:

@@ -1,6 +1,6 @@
 from tornado import gen
 from ocperf_utils import *
-from bokeh.models import ColumnDataSource
+
 
 @gen.coroutine
 def update(line, source):

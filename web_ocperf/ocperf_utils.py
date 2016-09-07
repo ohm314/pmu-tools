@@ -1,11 +1,10 @@
-import ocperf as ocp
 from os import path
 import json
-import sys
-import subprocess
+from subprocess import Popen, PIPE
 import re
-import pandas as pd
 from StringIO import StringIO
+import pandas as pd
+import ocperf as ocp
 
 from defconfig import *
 from config import *
@@ -70,7 +69,7 @@ def async_stdout_handler(cmd, callback):
             break;
 
 def parse_perf_stat_output(raw_output):
-    df = pd.read_csv(StringIO(raw_output), index_col=False, header=None, 
+    df = pd.read_csv(StringIO(raw_output), index_col=False, header=None,
          names=PERF_STAT_CSV_HDR)
     df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
@@ -102,8 +101,6 @@ def get_ocperf_emap():
     return d
 
 def parse_raw_perf_list():
-    import re
-    from subprocess import Popen, PIPE
 
     workload = ["perf", "list"]
     matcher = r"\s+(\S+)\s+.*\[([Hardware|Software|Kernel].*event)\]"
