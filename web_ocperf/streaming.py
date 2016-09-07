@@ -26,7 +26,9 @@ def update(line, sources):
     logging.info(timestamp, value, event)
     try:
         logging.info("[UPDATE] Source ID: " + str(id(sources[event])))
-        sources[event].stream({'timestamp': [timestamp], event: [value]})
+        sources[event].stream({'timestamp': [timestamp],
+                               'value': [value],
+                               'event': [event]})
     except KeyError:
         logging.error("update of event %s failed. Could not find " % (event) +
                       "suitable ColumnDataSource")

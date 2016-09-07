@@ -12,7 +12,6 @@ def plot_parsed_ocperf_output(parsed_output=None, sources=None):
         raise Exception("Must provide at least one data sources!")
 
     fig = figure(toolbar_sticky=False, sizing_mode="scale_width")
-
     hover = HoverTool()
 
     color_idx = 0
@@ -33,15 +32,26 @@ def plot_parsed_ocperf_output(parsed_output=None, sources=None):
             hover.tooltips = [
                 ('time', '@timestamp'),
                 ('value', '@value'),
+                ('event', '@event'),
                 ('symbol', '@symbol'),
                 ('location', '#@location'),
             ]
-
+        else:
+            hover.tooltips = [
+                ('time', '@timestamp'),
+                ('value', '@value'),
+                ('event', '@event'),
+            ]
     else:  # streaming plot
         for event, source in sources.iteritems():
-            fig.line('timestamp', event,
+            fig.line('timestamp', 'value',
                      source=source, legend=event, color=palette[color_idx])
             color_idx = (color_idx + 1) % 8
+        hover.tooltips = [
+            ('time', '@timestamp'),
+            ('value', '@value'),
+            ('event', '@event'),
+        ]
 
     fig.add_tools(hover)
     fig.xaxis.axis_label = 'time [s]'

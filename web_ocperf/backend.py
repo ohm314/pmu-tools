@@ -116,9 +116,11 @@ def run_benchmark(data, uuid=None):
     sources = {}
     for event in events:
         if ocp.version.has_name:
+            # newer versions of perf will return event name with _
             event = event.replace('.', '_')
         sources[event] = ColumnDataSource(data={'timestamp': [0.0],
-                                                event: [0]})
+                                                'value': [0],
+                                                'event': [event]})
 
     kwargs = {
         "tool": tool,
