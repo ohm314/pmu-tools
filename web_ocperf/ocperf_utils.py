@@ -1,6 +1,6 @@
 from os import path
 import json
-from subprocess import Popen, PIPE
+import subprocess
 import re
 from StringIO import StringIO
 import pandas as pd
@@ -106,7 +106,7 @@ def parse_raw_perf_list():
     matcher = r"\s+(\S+)\s+.*\[([Hardware|Software|Kernel].*event)\]"
     p = re.compile(matcher)
 
-    (out, err) = Popen(workload, stdout=PIPE).communicate()
+    (out, err) = subprocess.Popen(workload, stdout=subprocess.PIPE).communicate()
 
     events_list = []
 
