@@ -23,7 +23,7 @@ def update(line, sources):
         logging.warning(traceback.format_exc())
         return
 
-    logging.info(timestamp, value, event)
+    logging.info("parsed: %d, %d, %s" % (timestamp, value, event))
     try:
         logging.info("[UPDATE] Source ID: " + str(id(sources[event])))
         sources[event].stream({'timestamp': [timestamp],

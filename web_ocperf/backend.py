@@ -4,6 +4,7 @@ import json
 import uuid
 from datetime import datetime
 import os
+import logging
 
 import peewee as pw
 # from playhouse.flask_utils import FlaskDB
@@ -34,6 +35,8 @@ import streaming
 
 from defconfig import *
 from config import *
+
+logging.basicConfig(level=logging.WARNING)
 
 # globals
 app = Flask("ocperf server", static_url_path='')
