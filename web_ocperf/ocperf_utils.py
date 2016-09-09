@@ -77,7 +77,7 @@ def parse_perf_stat_output(raw_output):
 
 def parse_perf_record_output(raw_output):
     df = pd.read_csv(StringIO(raw_output), names=PERF_RECORD_CSV_HDR,
-                     sep=':?\s+', engine='python')
+                     sep=';', engine='python')
     df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
     return df
@@ -141,7 +141,7 @@ def get_perf_emap():
     return l
 
 def read_perfdata(filename):
-    p = subprocess.Popen(["perf", "script", "-i", filename], stdout=subprocess.PIPE)
+    p = subprocess.Popen(["perf", "script", "-s", "perf-script.py", "-i", filename], stdout=subprocess.PIPE)
     (out, err) = p.communicate()
     return out
 

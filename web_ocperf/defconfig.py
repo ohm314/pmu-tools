@@ -15,6 +15,6 @@ PERF_RECORD_CSV_HDR = [
     'value',
     'event_name',
     'location',
-    'null',
+    #'null',
     'symbol',
 ]
