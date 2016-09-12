@@ -42,17 +42,17 @@ def build_ocperf_cmd(tool, workload, events_list=None, interval=None, **kwargs):
 
     elif tool == "record":
         filename = "logs/" + str(kwargs['uuid']) + ".perf.data"
-        cmd = ["perf", "record", "-o", filename]
+        cmd = ["perf", "record", "-c", "2000000", "-o", filename]
 
         if events_list:
-            cmd += ["-e", ",".join(events_list)]
+            events = "'{cycles," + ",".join(events_list) + "}:S'"
+            cmd += ["-e", events]
 
         # TODO: add support for setting frequency with -F flag
 
-
     cmd += workload
-
     return cmd
+
 
 def async_stdout_handler(cmd, callback):
     import subprocess
@@ -60,39 +60,43 @@ def async_stdout_handler(cmd, callback):
     from os import O_NONBLOCK, read
     from fcntl import fcntl, F_GETFL, F_SETFL
 
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-    flags = fcntl(p.stdout, F_GETFL)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            universal_newlines=True)
+    flags = fcntl(proc.stdout, F_GETFL)
 
     buff = []
     reading = False
     while True:
-        output = p.stdout.readline()
+        output = proc.stdout.readline()
 
         if output != '' and not reading:
-            fcntl(p.stdout, F_SETFL, flags | O_NONBLOCK)
+            fcntl(proc.stdout, F_SETFL, flags | O_NONBLOCK)
             reading = True
             buff.append(output)
 
         if output != '' and reading:
             buff.append(output)
 
-        if output == '' and p.poll() is None and reading:
-            fcntl(p.stdout, F_SETFL, flags & ~O_NONBLOCK)
+        if output == '' and proc.poll() is None and reading:
+            fcntl(proc.stdout, F_SETFL, flags & ~O_NONBLOCK)
             reading = False
 
         if output == '' and len(buff) != 0:
             callback(buff)
             buff = []
 
-        if output == '' and p.poll() is not None:
-            break;
+        if output == '' and proc.poll() is not None:
+            break
+
 
 def parse_perf_stat_output(raw_output):
     df = pd.read_csv(StringIO(raw_output), index_col=False, header=None,
-         names=PERF_STAT_CSV_HDR)
+                              names=PERF_STAT_CSV_HDR)
     df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
 
     return df
+
 
 def parse_perf_record_output(raw_output):
     df = pd.read_csv(StringIO(raw_output), names=PERF_RECORD_CSV_HDR,
@@ -101,6 +105,7 @@ def parse_perf_record_output(raw_output):
 
     return df
 
+
 def get_ocperf_emap():
     emap = ocp.find_emap()
 
@@ -108,16 +113,17 @@ def get_ocperf_emap():
 
     for k in emap.events.keys():
         if not k == '':
-            d.append( {"sym":k, "desc":emap.desc[k]} )
+            d.append({"sym": k, "desc": emap.desc[k]})
 
     try:
         for k in emap.uncore_events.keys():
             if not k == '':
-                d.append( {"sym":k, "desc":emap.uncored_events[k].desc} )
+                d.append({"sym": k, "desc": emap.uncored_events[k].desc})
     except:
         pass
 
     return d
+
 
 def parse_raw_perf_list():
 
@@ -136,6 +142,7 @@ def parse_raw_perf_list():
             events_list.append(m.groups()[0])
 
     return events_list
+
 
 def get_perf_emap():
     import subprocess
@@ -159,10 +166,12 @@ def get_perf_emap():
 
     return l
 
+
 def read_perfdata(filename):
     p = subprocess.Popen(["perf", "script", "-s", "perf-script.py", "-i", filename], stdout=subprocess.PIPE)
     (out, err) = p.communicate()
     return out
+
 
 def get_combined_emap():
     ocperf_emap = get_ocperf_emap()
@@ -175,13 +184,15 @@ def get_combined_emap():
 def serialize_emap(emap):
     return json.dumps(emap)
 
+
 def run_ocperf(tool, workload, events, interval, doc=None, source=None, env=None, **kwargs):
     """
-    workload - command to profile represented as list of strings like .split(' ')
+    workload - command to profile represented as list of strings
     events - list of symbolic names of events to count
     interval - sampling interval
     """
-    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events, interval=interval, **kwargs)
+    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events,
+                                  interval=interval, **kwargs)
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
     perf_cmd = " ".join(perf_cmd)
