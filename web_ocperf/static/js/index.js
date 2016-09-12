@@ -29,7 +29,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
 
         $scope.frontend_state.workload = "";
         // $scope.frontend_state.workload = "/tmp/workload.py";
-        $scope.frontend_state.events = ["instructions"];
+        $scope.frontend_state.events = [];
         $scope.frontend_state.interval = 100;
         $scope.frontend_state.streaming = true;
         $scope.frontend_state.tool = "stat";
