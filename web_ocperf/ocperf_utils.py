@@ -6,8 +6,27 @@ from StringIO import StringIO
 import pandas as pd
 import ocperf as ocp
 
-from defconfig import *
-from config import *
+
+PERF_STAT_CSV_HDR = ['timestamp',
+                     'value',
+                     'unit',
+                     'event_name',
+                     'run_time',
+                     'mux',
+                     'var',
+                     'metric_val',
+                     'metric_unit',
+                    ]
+PERF_RECORD_CSV_HDR = ['process',
+                       'PID',
+                       'timestamp',
+                       'value',
+                       'event_name',
+                       'location',
+                       #'null',
+                       'symbol',
+                       ]
+
 
 def build_ocperf_cmd(tool, workload, events_list=None, interval=None, **kwargs):
     cmd = None

@@ -3,3 +3,4 @@ marshmallow
 peewee
 bokeh
 pandas
+PyYAML

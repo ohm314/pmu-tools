@@ -1,0 +1,5 @@
+database: './web_ocperf.sqlt'
+ip_whitelist:
+  - localhost
+  - 127.0.0.1
+log_level: WARNING  # DEBUG, INFO, WARNING, ERROR

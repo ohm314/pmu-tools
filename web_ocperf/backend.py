@@ -32,17 +32,15 @@ import ocperf as ocp
 from plot_utils import plot_parsed_ocperf_output
 import ocperf_utils
 import streaming
+from config import config
 
-from defconfig import *
-from config import *
-
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.getLevelName(config.log_level))
 
 # globals
 app = Flask("ocperf server", static_url_path='')
 app.config.from_object(__name__)
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
-db = pw.SqliteDatabase(DATABASE)
+db = pw.SqliteDatabase(config.database)
 
 
 def init():
@@ -54,7 +52,7 @@ def init():
 # --------- HELPERS ------------
 @app.before_request
 def before_request():
-    if request.remote_addr not in IP_WHITELIST:
+    if request.remote_addr not in config.ip_whitelist:
         abort(403)
     else:
         g.db = db
