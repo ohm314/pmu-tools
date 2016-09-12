@@ -44,12 +44,14 @@ app.config.from_object(__name__)
 source = ColumnDataSource(data=dict(x=[0], y=[0]))
 db = pw.SqliteDatabase(DATABASE)
 
+
 def init():
     """initialization code"""
     if not os.path.exists('logs/'):
         os.makedirs('logs/')
 
-#--------- HELPERS ------------
+
+# --------- HELPERS ------------
 @app.before_request
 def before_request():
     if request.remote_addr not in IP_WHITELIST:
@@ -58,6 +60,7 @@ def before_request():
         g.db = db
         g.db.connect()
 
+
 @app.after_request
 def after_request(response):
     if response.status_code < 400:
@@ -65,10 +68,11 @@ def after_request(response):
 
     return response
 
-#--------- MODELS -------------
+# --------- MODELS -------------
 class BaseModel(pw.Model):
     class Meta:
         database = db
+
 
 class SessionModel(BaseModel):
     title = pw.CharField(default="no title")
@@ -76,11 +80,13 @@ class SessionModel(BaseModel):
     date_created = pw.DateTimeField(default=datetime.utcnow)
     # date_updated = pw.DateTimeField()
 
+
 class BenchmarkModel(BaseModel):
     session = pw.ForeignKeyField(SessionModel, related_name='benchmarks')
     date_created = pw.DateTimeField(default=datetime.utcnow)
     uuid = pw.UUIDField(default=uuid.uuid4)
     frontend_state = pw.TextField()
+
 
 def create_tables():
     db.connect()
@@ -89,18 +95,21 @@ def create_tables():
         # table.drop_table()
         table.create_table(True)
 
-#---------- SCHEMAS -----------
+
+# ---------- SCHEMAS -----------
 class SessionSchema(Schema):
     title = fields.Str()
     uuid = fields.UUID()
     date_created = fields.DateTime()
     # TODO date_updated = fields.Date(dump_only=True)
 
+
 class BenchmarkSchema(Schema):
     session = fields.Nested(SessionSchema, only=['uuid'])
     date_created = fields.DateTime()
     uuid = fields.UUID()
     frontend_state = fields.String()
+
 
 # util
 def run_benchmark(data, uuid=None):
@@ -172,31 +181,35 @@ def rest_sessions_endpoint():
     elif request.method == 'POST':
         title = request.get_json()['session_title']
 
-        s = SessionModel.create(title=title)
-        json_s, err = SessionSchema().dumps(s)
+        session_model = SessionModel.create(title=title)
+        json_s, err = SessionSchema().dumps(session_model)
 
         return Response(json_s, mimetype="application/json")
+
 
 @app.route("/api/v1/session/<uuid:session_uuid>", methods=['GET', 'POST'])
 def rest_single_session_endpoint(session_uuid):
     if request.method == 'GET':
-        session = SessionModel.get(SessionModel.uuid==session_uuid)
+        session = SessionModel.get(SessionModel.uuid == session_uuid)
         result = BenchmarkSchema().dumps(session.benchmarks, many=True)
         return result.data
 
     elif request.method == 'POST':
         state = json.dumps(request.get_json())
 
-        session = SessionModel.get(SessionModel.uuid==session_uuid)
-        benchmark = BenchmarkModel.create(session=session, frontend_state=state)
+        session = SessionModel.get(SessionModel.uuid == session_uuid)
+        benchmark = BenchmarkModel.create(session=session,
+                                          frontend_state=state)
         result = BenchmarkSchema().dumps(benchmark)
 
         script = run_benchmark(request.get_json(), benchmark.uuid)
         # return script, state
-        ret = jsonify({'script':script, 'state':request.get_json()})
+        ret = jsonify({'script': script, 'state': request.get_json()})
         return ret
 
-@app.route("/api/v1/benchmark/<uuid:benchmark_uuid>.<out_format>", methods=['GET', 'POST'])
+
+@app.route("/api/v1/benchmark/<uuid:benchmark_uuid>.<out_format>",
+           methods=['GET', 'POST'])
 def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
     SUPPORTED_FORMATS = ['js', 'perflog', 'html', 'data']
     TEMPLATE = """
@@ -217,8 +230,8 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
         filename = "logs/" + str(benchmark_uuid) + ".perf.data"
 
         if os.path.isfile(filename):
-            raw_perf_script_output = read_perfdata(filename)
-            parsed_output = parse_perf_record_output(raw_perf_script_output)
+            raw_perf_script_output = ocperf_utils.read_perfdata(filename)
+            parsed_output = ocperf_utils.parse_perf_record_output(raw_perf_script_output)
         else:
             abort(404)
 
@@ -226,26 +239,24 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
         filename = "logs/" + str(benchmark_uuid) + ".perflog"
 
         if os.path.isfile(filename):
-            with open(filename) as f:
-                raw_output = f.read()
+            with open(filename) as stat_file:
+                raw_output = stat_file.read()
 
-            parsed_output = parse_perf_stat_output(raw_output)
+            parsed_output = ocperf_utils.parse_perf_stat_output(raw_output)
         else:
             abort(404)
 
-
-    p = plot_parsed_ocperf_output(parsed_output=parsed_output)
-
+    fig = plot_parsed_ocperf_output(parsed_output=parsed_output)
 
     doc = bokeh.plotting.curdoc()
     session = push_session(doc)
 
-    doc.add_root(p)
-    script = autoload_server(model=p, session_id=session.id)
+    doc.add_root(fig)
+    script = autoload_server(model=fig, session_id=session.id)
 
     if out_format == "js":
         # return Response(script)
-        return jsonify({'script': script, 'state':state})
+        return jsonify({'script': script, 'state': state})
     elif out_format == "perflog":
         send_from_directory("logs", filename)
     elif out_format == "html":
@@ -262,24 +273,29 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
 
 #     return jsonify({script:script, state:state})
 
+
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():
-    combined_emap = get_combined_emap()
-    json_emap = serialize_emap(combined_emap)
+    combined_emap = ocperf_utils.get_combined_emap()
+    json_emap = ocperf_utils.serialize_emap(combined_emap)
 
     return Response(json_emap, mimetype="application/json")
+
 
 @app.route("/")
 def index():
     return send_from_directory("templates", "index.html")
 
+
 @app.route("/js/<path:path>")
 def static_js(path):
     return send_from_directory('static/js', path)
 
+
 @app.route("/templates/<path:path>")
 def static_html(path):
     return send_from_directory('templates', path)
+
 
 @app.route("/api/v1/benchmark/<uuid:uuid>.perflog")
 def get_raw_data(uuid):
