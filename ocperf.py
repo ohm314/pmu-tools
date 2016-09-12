@@ -790,7 +790,7 @@ def process_args(emap, argv=sys.argv):
                                              True if record == yes else False, emap)
             cmd.append(prefix + event)
         elif argv[i][0:2] == '-c':
-            oarg, i, prefix = getarg(i, cmd)
+            oarg, i, prefix = getarg(i, cmd, argv=argv)
             if oarg == "default":
                 if overflow is None:
                     print >>sys.stderr,"""
