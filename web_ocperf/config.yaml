@@ -3,3 +3,9 @@ ip_whitelist:
   - localhost
   - 127.0.0.1
 log_level: WARNING  # DEBUG, INFO, WARNING, ERROR
+
+event:
+  cpu/mem-loads/:
+    modifier: pp
+  mem_uops_retired.all_loads:
+    modifier: :pp

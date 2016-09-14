@@ -5,6 +5,7 @@ import re
 from StringIO import StringIO
 import pandas as pd
 import ocperf as ocp
+from config import config
 
 
 PERF_STAT_CSV_HDR = ['timestamp',
@@ -191,7 +192,15 @@ def run_ocperf(tool, workload, events, interval, doc=None, source=None, env=None
     events - list of symbolic names of events to count
     interval - sampling interval
     """
-    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=events,
+
+    # first get modifiers for events as defined in config.yaml
+    event_strs = []
+    for event in events:
+        if event in config.event and 'modifier' in config.event[event]:
+            event += config.event[event]['modifier']
+        event_strs.append(event)
+
+    ocperf_cmd = build_ocperf_cmd(tool, workload, events_list=event_strs,
                                   interval=interval, **kwargs)
     emap = ocp.find_emap()
     perf_cmd = ocp.process_args(emap, ocperf_cmd)
