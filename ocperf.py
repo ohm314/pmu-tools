@@ -13,7 +13,7 @@
 #
 # wrapper for perf for using named events and events with additional MSRs.
 # syntax is like perf, except Intel events are listed and can be specified
-# 
+#
 # or library for other python program to convert intel event names to
 # perf/raw format
 #
@@ -22,8 +22,8 @@
 # - enable disable workarounds for specific events
 # - resolve uncore events
 # - handle offcore event on older kernels
-# For the later must run as root and only as a single instance per machine 
-# Normal events (mainly not OFFCORE) can be handled unprivileged 
+# For the later must run as root and only as a single instance per machine
+# Normal events (mainly not OFFCORE) can be handled unprivileged
 # For events you can specify additional intel names from the list
 #
 # env variables:
@@ -194,7 +194,7 @@ class Event:
     def output(self, use_raw=False, flags="", noname=False, period=False, name=""):
         """Format an event for output and return as perf event string.
            use_raw when true return old style perf string (rXXX).
-           Otherwise chose between old and new style based on the 
+           Otherwise chose between old and new style based on the
            capabilities of the installed perf executable.
            flags when set add perf flags (e.g. u for user, p for pebs)."""
         val = self.val
@@ -202,7 +202,7 @@ class Event:
         extra = "".join(merge_extra(extra_set(self.extra), extra_set(flags)))
         extra, val = convert_extra(":" + extra, val, newe)
         if version.direct or use_raw:
-            ename = "r%x" % (val,) 
+            ename = "r%x" % (val,)
             if extra:
                 ename += ":" + extra
             # XXX should error for extras that don't fit into raw
@@ -521,7 +521,7 @@ class Emap(object):
     def update_event(self, e, ev):
         if e not in self.pevents:
             self.pevents[e] = ev
-        
+
     def getraw(self, r):
         e = "r%x" % (r)
         if e in self.pevents:
@@ -543,7 +543,7 @@ class Emap(object):
         wrap = None
         if human:
             wrap = textwrap.TextWrapper(initial_indent="     ",
-                                        subsequent_indent="     ")            
+                                        subsequent_indent="     ")
         for k in sorted(self.events.keys()):
             print_event(k, self.desc[k], f, human, wrap)
         for k in sorted(self.uncore_events.keys()):
@@ -655,7 +655,7 @@ def add_extra_env(emap, el):
 def find_emap():
     """Search and read a perfmon event map.
        When the EVENTMAP environment variable is set read that, otherwise
-       read the map for the current CPU. EVENTMAP can be a CPU specifier 
+       read the map for the current CPU. EVENTMAP can be a CPU specifier
        in the map file or a path name.
        Dito for the OFFCORE and UNCORE environment variables.
 
@@ -696,6 +696,7 @@ def find_emap():
 def process_events(event, print_only, period, emap):
     overflow = None
     # replace inner commas so we can split events
+    # NOTE: a better regex could be: ([a-z][a-z0-9_\.:]+)(?:/([^/]+))?(?:/([a-z]*))?
     event = re.sub(r"([a-z][a-z0-9]+/)([^/]+)/",
             lambda m: m.group(1) + m.group(2).replace(",", "#") + "/",
             event)
@@ -799,7 +800,7 @@ Specify the -e events before -c default or event has no overflow field."""
                 cmd.append(prefix + overflow)
             else:
                 cmd.append(prefix + oarg)
-        else:        
+        else:
             cmd.append(argv[i])
         i += 1
     print " ".join(map(pipes.quote, cmd))
