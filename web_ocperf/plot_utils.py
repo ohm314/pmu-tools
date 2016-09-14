@@ -21,6 +21,8 @@ def plot_parsed_ocperf_output(parsed_output=None, sources=None):
     if parsed_output is not None:
 
         for event in parsed_output.event_name.unique():
+            if event == 'cycles':
+                continue # skip because this is just the sample leader
             data = parsed_output[parsed_output.event_name == event]
             src = ColumnDataSource(data=data)
             fig.line('timestamp', 'value',
