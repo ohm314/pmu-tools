@@ -186,7 +186,7 @@ class Event:
 	    if name:
 		e += ",name=" + name
 	    elif not noname:
-		e += ",name=%s" % (self.name.replace(".", "_"),)
+                e += ",name=%s" % (self.name.replace(".", "_").replace(":", "_").replace("=", "_"))
         if period and self.period:
             e += ",period=%d" % self.period
         return e
@@ -391,6 +391,12 @@ fixed_counters = {
     "cpu_clk_unhalted.thread_any": (0x3c, 0, 1),
 }
 
+def update_ename(ev, name):
+    if ev:
+        ev = copy.deepcopy(ev)
+        ev.name = name
+    return ev
+
 class Emap(object):
     """Read an event table."""
 
@@ -494,6 +500,10 @@ class Emap(object):
         e = e.lower()
         extra = ""
         edelim = ""
+        m = re.match(r'([^:]+):request=([^:]+):response=([^:]+)', e)
+        if m:
+            ename = m.group(1) + "." + m.group(2) + "." + m.group(3)
+            return update_ename(self.getevent(ename), e)
         m = re.match(r'(.*?):(.*)', e)
         if m:
             extra = m.group(2)
@@ -509,11 +519,11 @@ class Emap(object):
                 return ev
             return self.events[e]
         elif e.endswith("_ps"):
-            return self.getevent(e[:-3] + ":p" + extra)
+            return update_ename(self.getevent(e[:-3] + ":p" + extra), e)
         elif e.endswith("_0") or e.endswith("_1"):
-            return self.getevent(e.replace("_0","").replace("_1","") + edelim + extra)
+            return update_ename(self.getevent(e.replace("_0","").replace("_1","") + edelim + extra), e)
         elif e.startswith("offcore") and (e + "_0") in self.events:
-            return self.getevent(e + "_0" + edelim + extra)
+            return update_ename(self.getevent(e + "_0" + edelim + extra), e)
         elif e in self.uncore_events:
             return check_uncore_event(self.uncore_events[e])
         return None
@@ -702,51 +712,50 @@ def process_events(event, print_only, period, emap):
             event)
     el = event.split(",")
     nl = []
+    group_index = 0
     for i in el:
+	group_start = ""
+	group_end = ""
         start = ""
         end = ""
         if i.startswith('{'):
-            start = "{"
+	    group_start = "{"
             i = i[1:]
-        if i.endswith('}'):
-            end = "}"
-            i = i[:-1]
+            group_index = len(nl)
+	m = re.match(r'(.*)(\}(:.*)?)', i)
+	if m:
+	    group_end = m.group(2)
+	    i = m.group(1)
         i = i.strip()
-        m = re.match(r"(cpu/)([a-zA-Z0-9._]+)(.*?/)([^,]*)", i)
-        if not m:
-            m = re.match(r"(uncore_.+?/)([a-zA-Z0-9_.]+)(.*?/)([^,]*)", i)
+	m = re.match(r'(cpu|uncore_.*?)/([^#]+)(#?.*?)/(.*)', i)
         if m:
-            start += m.group(1)
+	    start = m.group(1) + "/"
             ev = emap.getevent(m.group(2))
-            end += m.group(3)
+	    end = m.group(3) + "/"
             if ev:
-                end += "".join(merge_extra(extra_set(ev.extra), extra_set(m.group(4))))
+		qual = "".join(merge_extra(extra_set(ev.extra), extra_set(m.group(4))))
+		end += qual
                 i = ev.output_newstyle(period=period)
             else:
                 start = ""
                 end = ""
         else:
-            extra = ""
-            m = re.match("([^:]*):(.*)", i)
-            if m:
-                extra = m.group(2)
-                i = m.group(1)
             ev = emap.getevent(i)
             if ev:
-                i = ev.output(flags=extra, period=period)
-            else:
-               if extra:
-                   i += ":" + extra
+                i = ev.output(period=period)
         if ev:
             if ev.msr:
                 msr.checked_writemsr(ev.msr, ev.msrval, print_only)
             if emap.latego and (ev.val & 0xffff) in latego.latego_events:
                 latego.setup_event(ev.val & 0xffff, 1)
             overflow = ev.overflow
-        event = (start + i + end).replace("#", ",")
+	event = (group_start + start + i + end + group_end).replace("#", ",")
         nl.append(event)
         if ev:
             emap.update_event(event, ev)
+        if "S" in group_end:
+            for j in range(group_index + 1, len(nl)):
+                nl[j] = re.sub(r',period=\d+', '', nl[j])
 
     return str.join(',', nl), overflow
 

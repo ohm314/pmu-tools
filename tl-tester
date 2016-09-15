@@ -63,7 +63,7 @@ grep :k log
 grep /k log
 EVENTMAP=${cpus[$DCPU]} FORCECPU=simple $WRAP ./toplev.py --no-desc -l1 $LOAD
 # check errata handling
-EVENTMAP=GenuineIntel-6-56 FORCECPU=bdw $WRAP ./toplev.py --no-desc --all $LOAD | tee log
+EVENTMAP=GenuineIntel-6-56 FORCECPU=bdw $WRAP ./toplev.py --force-events --no-desc --all $LOAD | tee log
 grep BDE70 log
 
 # test L1 uses a single group
@@ -113,6 +113,8 @@ if python -c 'import matplotlib.pyplot' ; then
 EVENTMAP=${cpus[hsw]} FORCECPU=hsw $WRAP ./toplev.py --graph -o x.png -d --metrics -l4 $LOAD
 fi
 EVENTMAP=${cpus[ivb]} FORCECPU=ivb $WRAP ./toplev.py -d -l4 -I 100 sleep 1
+EVENTMAP=${cpus[ivb]} FORCECPU=ivb $WRAP ./toplev.py -o log -m -l4 -I 100 $LOAD
+grep IPC log
 EVENTMAP=${cpus[ivb]} FORCECPU=ivb $WRAP ./toplev.py -d -l4 -I 100 --columns sleep 1
 EVENTMAP=${cpus[ivb]} FORCECPU=ivb $WRAP ./toplev.py -d -l4 -I 100 --columns -x, sleep 1
 EVENTMAP=${cpus[ivb]} FORCECPU=ivb $WRAP ./toplev.py -d -l4 --valcsv val.csv --user $LOAD | tee log
@@ -127,6 +129,8 @@ rm perf.data.{1,2,3,4,5,6,7,8,9,10}
 #EVENTMAP=${cpus[snb]} FORCEHT=0 FORCECPU=snb $WRAP ./toplev.py -d -l4 -I 1000 -a --per-core sleep 1
 #EVENTMAP=${cpus[snb]} FORCEHT=0 FORCECPU=snb $WRAP ./toplev.py -d -l4 -I 1000 -a --per-socket sleep 1
 #EVENTMAP=${cpus[snb]} FORCEHT=0 FORCECPU=snb $WRAP ./toplev.py -d --no-desc -l4 -I 1000 -a -A sleep 1
+
+EVENTMAP=${cpus[hsx]} FORCECPU=hsx $WRAP ./toplev.py  -l4 true
 
 $WRAP ./toplev.py -o /dev/null --no-desc -v -l5 --run-sample $LOAD
 for cpu in $SMTCPUS ; do
