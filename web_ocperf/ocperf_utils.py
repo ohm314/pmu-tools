@@ -5,6 +5,8 @@ import re
 from StringIO import StringIO
 import pandas as pd
 import ocperf as ocp
+import cpuinfo
+import logging
 from config import config
 
 
@@ -42,8 +44,18 @@ def build_ocperf_cmd(tool, workload, events_list=None, interval=None, **kwargs):
             cmd += ["-I", str(interval)]
 
     elif tool == "record":
+        adv_freq = cpuinfo.get_cpu_info()['hz_advertised_raw'][0]
+        freq = cpuinfo.get_cpu_info()['hz_actual_raw'][0]
+        if freq / adv_freq < 0.95 or freq / adv_freq > 1.05:
+            logging.warning('Frequency mismatch:')
+            logging.warning('%s expected but got %s' %
+                            (cpuinfo.get_cpu_info()['hz_advertised'],
+                            cpuinfo.get_cpu_info()['hz_actual']))
+            logging.warning('Frequency scaling and Turbo boost should be disabled')
+        sample_period = freq*int(interval) + 3
+
         filename = "logs/" + str(kwargs['uuid']) + ".perf.data"
-        cmd = ["perf", "record", "-c", "2000000", "-o", filename]
+        cmd = ["perf", "record", "-c", str(int(sample_period)), "-o", filename]
 
         if events_list:
             events = "'{cycles," + ",".join(events_list) + "}:S'"
