@@ -113,7 +113,10 @@ def parse_perf_stat_output(raw_output):
 def parse_perf_record_output(raw_output):
     df = pd.read_csv(StringIO(raw_output), names=PERF_RECORD_CSV_HDR,
                      sep=';', engine='python')
-    df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
+    if len(df) > 0:
+        df['timestamp'] = df['timestamp'].sub(df['timestamp'][0])
+    else:
+        logging.warning('No data in this perf run')
 
     return df
 
