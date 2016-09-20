@@ -280,8 +280,14 @@ def rest_delete_benchmark_endpoint(benchmark_uuid):
 
     try:
         benchmark = BenchmarkModel.get(BenchmarkModel.uuid == benchmark_uuid)
+        state = json.loads(benchmark.frontend_state)
+        if state['tool'] == "record":
+            filename = "logs/" + str(benchmark_uuid) + ".perf.data"
+        elif state['tool'] == 'stat':
+            filename = "logs/" + str(benchmark_uuid) + ".perflog"
+        os.remove(filename)
         benchmark.delete_instance()
-    except BenchmarkModel.DoesNotExist as dne:
+    except BenchmarkModelDoesNotExist as dne:
         logging.warning('User tried to delete a nonexisting benchmark '
                         + benchmark_uuid)
         return Response(status=404)
