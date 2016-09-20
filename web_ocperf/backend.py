@@ -275,6 +275,19 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
 #     return jsonify({script:script, state:state})
 
 
+@app.route("/api/v1/benchmark/<uuid:benchmark_uuid>/delete", methods=['GET'])
+def rest_delete_benchmark_endpoint(benchmark_uuid):
+
+    try:
+        benchmark = BenchmarkModel.get(BenchmarkModel.uuid == benchmark_uuid)
+        benchmark.delete_instance()
+    except BenchmarkModel.DoesNotExist as dne:
+        logging.warning('User tried to delete a nonexisting benchmark '
+                        + benchmark_uuid)
+        return Response(status=404)
+    return Response(status=200)
+
+
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():
     combined_emap = ocperf_utils.get_combined_emap()

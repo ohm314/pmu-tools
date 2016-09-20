@@ -63,6 +63,13 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
             });
         }
 
+        function deleteBenchmark(uuid) {
+
+            var url = "/api/v1/benchmark/" + uuid + "/delete";
+            $http.get(url).then(clearPlot).then(loadBenchmarks);
+
+        }
+
         function loadOldPlot(uuid) {
             var url = "/api/v1/benchmark/" + uuid + ".js";
 
@@ -71,6 +78,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
 
         $scope.clearPlot = clearPlot;
         $scope.loadOldPlot = loadOldPlot;
+        $scope.deleteBenchmark = deleteBenchmark;
 
         $scope.run = function() {
             var url = "/api/v1/session/" + $routeParams.uuid;

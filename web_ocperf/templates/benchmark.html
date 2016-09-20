@@ -59,6 +59,11 @@
                             </a>
                         </td>
                         <td>
+                            <a ng-click="deleteBenchmark(benchmark.uuid)" href="">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </a>
+                        </td>
+                        <td>
                             <a href="/api/v1/benchmark/{{ benchmark.uuid  }}.html" target="_blank">
                                 <span class="glyphicon glyphicon-share-alt"></span>
                             </a>
