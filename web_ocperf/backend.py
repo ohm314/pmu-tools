@@ -83,6 +83,7 @@ class BenchmarkModel(BaseModel):
     session = pw.ForeignKeyField(SessionModel, related_name='benchmarks')
     date_created = pw.DateTimeField(default=datetime.utcnow)
     uuid = pw.UUIDField(default=uuid.uuid4)
+    description = pw.TextField()
     frontend_state = pw.TextField()
 
 
@@ -106,6 +107,7 @@ class BenchmarkSchema(Schema):
     session = fields.Nested(SessionSchema, only=['uuid'])
     date_created = fields.DateTime()
     uuid = fields.UUID()
+    description = fields.Str()
     frontend_state = fields.String()
 
 
@@ -197,6 +199,7 @@ def rest_single_session_endpoint(session_uuid):
 
         session = SessionModel.get(SessionModel.uuid == session_uuid)
         benchmark = BenchmarkModel.create(session=session,
+                                          description=request.get_json()['description'],
                                           frontend_state=state)
         result = BenchmarkSchema().dumps(benchmark)
 

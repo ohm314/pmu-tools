@@ -27,8 +27,8 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
     controller('benchmarkCtrl', function($scope, $http, ocperf_rest, $routeParams, $location) {
         $scope.frontend_state = {};
 
+        $scope.frontend_state.description = "";
         $scope.frontend_state.workload = "";
-        // $scope.frontend_state.workload = "/tmp/workload.py";
         $scope.frontend_state.events = [];
         $scope.frontend_state.interval = 100;
         $scope.frontend_state.streaming = true;
@@ -115,7 +115,7 @@ angular.module('ocperfApp', ['checklist-model', 'ui.bootstrap', 'ngRoute']).
             // var url = "/api/v1/session/" + $scope.uuid;
 
             // $http.post(url).then(function(response) {
-            //     console.log(response.data); 
+            //     console.log(response.data);
 
             //     fetch_benchmarks($scope.uuid);
             // });
