@@ -52,8 +52,7 @@ def build_ocperf_cmd(tool, workload, events_list=None, interval=None, **kwargs):
                             (cpuinfo.get_cpu_info()['hz_advertised'],
                             cpuinfo.get_cpu_info()['hz_actual']))
             logging.warning('Frequency scaling and Turbo boost should be disabled')
-        sample_period = freq*int(interval) + 3
-
+        sample_period = freq*(float(interval)/1000.) + 3
         filename = "logs/" + str(kwargs['uuid']) + ".perf.data"
         cmd = ["perf", "record", "-c", str(int(sample_period)), "-o", filename]
 
