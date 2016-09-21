@@ -11,7 +11,8 @@ def plot_parsed_ocperf_output(parsed_output=None, sources=None):
     if parsed_output is None and sources is None:
         raise Exception("Must provide at least one data sources!")
 
-    fig = figure(toolbar_sticky=False, sizing_mode="scale_width")
+    fig = figure(toolbar_sticky=False, plot_width=640, plot_height=480,
+                 responsive=True)
     hover = HoverTool()
 
     color_idx = 0
