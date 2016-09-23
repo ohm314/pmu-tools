@@ -29,7 +29,7 @@ from bokeh.embed import autoload_server
 
 # utils for web_ocperf
 import ocperf as ocp
-from plot_utils import plot_parsed_ocperf_output
+import plot_utils
 import ocperf_utils
 import streaming
 from config import config
@@ -147,12 +147,12 @@ def run_benchmark(data, uuid=None):
 
     if tool == "record":
         parsed_output = ocperf_utils.run_ocperf(**kwargs)
-        fig = plot_parsed_ocperf_output(parsed_output=parsed_output)
+        fig = plot_utils.plot_static(parsed_output)
 
     elif tool == "stat":
         if not do_stream:
             parsed_output = ocperf_utils.run_ocperf(**kwargs)
-            fig = plot_parsed_ocperf_output(parsed_output=parsed_output)
+            fig = plot_utils.plot_static(parsed_output)
 
         elif do_stream:
             thread = Thread(target=streaming.blocking_task, kwargs=kwargs)
@@ -162,7 +162,7 @@ def run_benchmark(data, uuid=None):
             thread.start()
             session_thread.start()
 
-            fig = plot_parsed_ocperf_output(sources=sources)
+            fig = plot_utils.plot_streaming(sources)
 
     if fig:
         doc.add_root(fig)
@@ -247,12 +247,12 @@ def rest_get_benchmark_script(benchmark_uuid, out_format="script"):
         else:
             abort(404)
 
-    fig = plot_parsed_ocperf_output(parsed_output=parsed_output)
+    fig = plot_utils.plot_static(parsed_output)
 
     doc = bokeh.plotting.curdoc()
+    doc.add_root(fig)
     session = push_session(doc)
 
-    doc.add_root(fig)
     script = autoload_server(model=fig, session_id=session.id)
 
     if out_format == "js":
@@ -293,6 +293,47 @@ def rest_delete_benchmark_endpoint(benchmark_uuid):
         return Response(status=404)
     return Response(status=200)
 
+
+@app.route("/api/v1/benchmark/<uuid:benchmark_uuid>.<out_format>/symbar", methods=['GET'])
+def rest_get_symbol_plot(benchmark_uuid, out_format):
+    SUPPORTED_FORMATS = ['js', 'perflog', 'html', 'data']
+    TEMPLATE = """
+    <html>
+    <body> <div class="bk-root">{} </div></body>
+    </html>
+    """
+    filename = None
+    raw_output = None
+
+    if out_format not in SUPPORTED_FORMATS:
+        abort()
+    benchmark = BenchmarkModel.get(BenchmarkModel.uuid == benchmark_uuid)
+    state = json.loads(benchmark.frontend_state)
+    if state['tool'] == "record":
+        filename = "logs/" + str(benchmark_uuid) + ".perf.data"
+        if os.path.isfile(filename):
+            raw_perf_script_output = ocperf_utils.read_perfdata(filename)
+            parsed_output = ocperf_utils.parse_perf_record_output(raw_perf_script_output)
+            fig = plot_utils.plot_by_symbol(parsed_output)
+
+            doc = bokeh.plotting.curdoc()
+            session = push_session(doc)
+
+            doc.add_root(fig)
+            script = autoload_server(model=fig, session_id=session.id)
+            if out_format == "js":
+                # return Response(script)
+                return jsonify({'script': script, 'state': state})
+            elif out_format == "perflog":
+                send_from_directory("logs", filename)
+            elif out_format == "html":
+                out = TEMPLATE.format(script)
+                return Response(out)
+            else:
+                abort()
+
+    else:
+        return Response(status=200)
 
 @app.route("/api/v1/emap", methods=['GET'])
 def rest_emap_endpoint():
